@@ -1,0 +1,18 @@
+# Virtual Environment
+venv/
+genhub_env/
+
+# Python cache
+__pycache__/
+
+# API Keys
+.env
+
+# Streamlit Cache
+.streamlit/
+
+# Logs
+*.log
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
