@@ -5,14 +5,32 @@ genhub_env/
 # Python cache
 __pycache__/
 
-# API Keys
+# API Keys & Credentials
 .env
+*.json
 
 # Streamlit Cache
 .streamlit/
 
+# Hugging Face Model Checkpoints
+*.bin
+*.ckpt
+*.pt
+*.onnx
+
+# Large CSV & Dataset Files
+*.csv
+*.parquet
+*.xlsx
+*.pkl
+
 # Logs
 *.log
+*.out
 
 # Jupyter Notebook Checkpoints
 .ipynb_checkpoints/
+
+# Docker & Node.js
+node_modules/
+docker-compose.yml
