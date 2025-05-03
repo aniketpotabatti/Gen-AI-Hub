@@ -15,13 +15,11 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-
 def generate_recipe(ingredients):
     """Generate a recipe based on given ingredients using Google Gemini API"""
     if not ingredients:
         st.warning("⚠️ Please enter at least one ingredient.")
         return ""
-
     try:
         model = genai.GenerativeModel(
             'gemini-1.5-flash',
