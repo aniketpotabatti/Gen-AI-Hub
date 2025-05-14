@@ -4,6 +4,11 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from pdf_utils import generate_pdf
 import re
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -15,11 +20,33 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-def generate_recipe(ingredients):
-    """Generate a recipe based on given ingredients using Google Gemini API"""
+
+def generate_recipe(ingredients, dietary_prefs=None, recipe_type=None, cuisine=None):
+    """Generate a recipe based on given ingredients and preferences using Google Gemini API
+    
+    Args:
+        ingredients (list): List of ingredients to use
+        dietary_prefs (str, optional): Dietary restrictions (e.g., vegan, vegetarian)
+        recipe_type (str, optional): Type of recipe (e.g., main course, dessert)
+        cuisine (str, optional): Preferred cuisine style
+    """
     if not ingredients:
         st.warning("⚠️ Please enter at least one ingredient.")
         return ""
+
+    # Validate ingredients against dietary preferences
+    non_vegan = ['meat', 'chicken', 'beef', 'pork', 'fish', 'egg', 'milk', 'cream', 'cheese', 'butter', 'honey']
+    non_vegetarian = ['meat', 'chicken', 'beef', 'pork', 'fish']
+    
+    if dietary_prefs == 'vegan':
+        conflicts = [ing for ing in ingredients if any(non_veg in ing.lower() for non_veg in non_vegan)]
+        if conflicts:
+            return f"⚠️ Cannot generate a vegan recipe with these ingredients: {', '.join(conflicts)}. Please remove them or change dietary preference."
+    elif dietary_prefs == 'vegetarian':
+        conflicts = [ing for ing in ingredients if any(non_veg in ing.lower() for non_veg in non_vegetarian)]
+        if conflicts:
+            return f"⚠️ Cannot generate a vegetarian recipe with these ingredients: {', '.join(conflicts)}. Please remove them or change dietary preference."
+
     try:
         model = genai.GenerativeModel(
             'gemini-1.5-flash',
@@ -35,9 +62,20 @@ def generate_recipe(ingredients):
             ]
         )
 
-        # Enhanced prompt
+        # Build dietary requirements string
+        requirements = []
+        if dietary_prefs:
+            requirements.append(f"Must be {dietary_prefs}")
+        if recipe_type:
+            requirements.append(f"Should be a {recipe_type}")
+        if cuisine:
+            requirements.append(f"Follow {cuisine} cuisine style")
+        requirements_str = ' and '.join(requirements)
+
+        # Enhances prompt with requirements
         prompt = (
             f"Create a detailed, delicious-sounding recipe using ONLY these ingredients if possible: {', '.join(ingredients)}. "
+            f"{requirements_str + '. ' if requirements_str else ''}"
             "If essential complementary ingredients are missing (like oil, salt, pepper, water), you can assume they are available. "
             "The recipe should include:\n"
             "- **Recipe Title** (Creative and appealing)\n"
@@ -80,19 +118,19 @@ def main():
     st.markdown(
         r"""
         <style>
-        /* Base dark theme adjustments */
+        /* Base theme adjustments */
         body {
-            color: #e1e1e1; /* Light gray text */
+            color: inherit; 
         }
         .main > div { /* Target the main block container */
-             background-color: #181820; /* Dark background */
+             background-color: transparent; 
         }
-        .stApp { /* Ensure app background is dark */
-             background-color: #181820;
+        .stApp { /* Use default Streamlit theme */
+             background-color: transparent;
         }
         .stSidebar > div:first-child { /* Sidebar styling */
-             background: #2a2a35; /* Match output card background */
-             padding: 1.5rem 1rem; /* Add horizontal padding */
+             background-color: transparent; 
+             padding: 1.5rem 1rem; 
         }
 
         /* Center content within the wide layout */
@@ -104,7 +142,7 @@ def main():
         }
 
         /* Headings */
-        h1, h2, h3 { color: #ff914d !important; font-weight: 700; }
+        h1, h2, h3 { color: #ff6d00 !important; font-weight: 700; }
         h1 { text-align: center; margin-bottom: 0.5em; }
         h3 { margin-top: 1.5em; margin-bottom: 0.8em; border-bottom: 1px solid #444; padding-bottom: 0.3em;}
 
@@ -120,13 +158,13 @@ def main():
 
         /* Input fields styling */
         .stTextInput > div > div > input, .stSelectbox > div > div {
-            background: #2e2e38;
+            background: #222222;
             color: #e1e1e1;
             border-radius: 8px;
             border: 1px solid #4a4a5a; /* Subtle border */
         }
         .stTextInput > div > div > input:focus, .stSelectbox > div > div:focus-within {
-             border-color: #ff914d; /* Highlight on focus */
+             border-color: #F8F5E9; /* Highlight on focus */
              box-shadow: 0 0 0 2px rgba(255, 145, 77, 0.3);
         }
 
@@ -137,7 +175,7 @@ def main():
 
         /* Button styling */
         .stButton > button {
-            background: linear-gradient(90deg, #ff914d 40%, #ff6d00 100%);
+            background: linear-gradient(50deg, #222222 40%, #ff6d00 100%);
             color: #fff !important; /* Ensure white text */
             font-weight: 700; /* Bolder text */
             border-radius: 10px;
@@ -158,21 +196,6 @@ def main():
             transform: translateY(0px); /* Press down effect */
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             background: linear-gradient(90deg, #ff6d00 40%, #ff914d 100%);
-        }
-
-        /* Download Button */
-        .stDownloadButton > button {
-            background-color: #4caf50;
-            color: white !important;
-            font-weight: 600;
-            border-radius: 8px;
-            padding: 0.6em 1.8em;
-            border: none;
-            margin-top: 1em;
-            transition: background-color 0.2s;
-        }
-        .stDownloadButton > button:hover {
-             background-color: #388e3c;
         }
 
         /* Expander styling */
@@ -257,70 +280,91 @@ def main():
     # --- Main Input Area ---
     ingredient_input = st.text_input(
         "What ingredients do you have?",
-        placeholder="e.g. chicken, tomatoes, pasta, olive oil",
+        placeholder="Enter your ingredients...",
         help="List the main ingredients you want to use, separated by commas."
     )
 
-    # --- Generate Button ---
-    generate_btn = st.button("🍽️ Generate Recipe", help="Click to generate a recipe based on your selections.")
+    def handle_pdf_generation(recipe_text, recipe_title):
+        """Handle PDF generation and download"""
+        try:
+            safe_name = re.sub(r'[^\w\-_\. ]', '_', recipe_title).replace(' ', '_')
+            pdf_bytes = generate_pdf(recipe_text)
+            if not pdf_bytes:
+                st.error("Failed to generate PDF")
+                return False
+            return pdf_bytes, safe_name
+        except Exception as e:
+            logger.error(f"Error generating PDF: {str(e)}")
+            st.error(f'Could not generate PDF: {str(e)}')
+            return False
 
-    # --- Recipe Generation and Display ---
+    # --- Generate Button ---
+    generate_btn = st.button("🍽️ Generate Recipe", 
+                           help="Click to generate a recipe based on your selections.",
+                           key="generate_recipe_btn")
+
+    # Store recipe in session state
+    if 'recipe_text' not in st.session_state:
+        st.session_state.recipe_text = None
+        st.session_state.recipe_title = None
+
+    # Recipe Generation and Display 
     if generate_btn:
-        if ingredient_input:
+        if not ingredient_input or not ingredient_input.strip():
+            st.warning("🤔 Please enter some ingredients first!")
+        else:
             ingredients = [ing.strip() for ing in ingredient_input.split(',') if ing.strip()]
             if len(ingredients) < 1:
-                st.warning("⚠️ Please enter at least one ingredient.")
+                st.warning("☹️ Please enter at least one ingredient.")
             else:
                 with st.spinner('✨ Crafting your perfect recipe... Please wait.'):
-                    recipe_text = generate_recipe(ingredients)
+                    recipe_text = generate_recipe(
+                        ingredients=ingredients,
+                        dietary_prefs=selected_diet if selected_diet != 'None' else None,
+                        cuisine=selected_cuisine if selected_cuisine != 'Any' else None
+                    )
+                    st.session_state.recipe_text = recipe_text
 
-                # --- Refined Recipe Output ---
-                if "Unable to generate recipe" in recipe_text or "Recipe generation blocked" in recipe_text:
+                error_msgs = ["Unable to generate recipe", "Recipe generation blocked", "Cannot generate"]
+                if any(msg in recipe_text for msg in error_msgs):
                     st.markdown(f"<p style='color:#ff6b6b;'>{recipe_text}</p>", unsafe_allow_html=True)
                 else:
-                    # Extract title
-                    m = re.search(r'^#\\s*(.+?)(?:\\n|$)', recipe_text,
-                                  re.MULTILINE|re.IGNORECASE)
-                    recipe_title = m.group(1).strip() if m else 'Recipe'
+                    title_pattern = r'^#\s*(.+?)(?:\n|$)'
+                    m = re.search(title_pattern, recipe_text, re.MULTILINE | re.IGNORECASE)
+                    recipe_title = m.group(1).strip() if m and m.group(1).strip() else 'Recipe'
+                    st.session_state.recipe_title = recipe_title
 
-                    # Strip the top-level header, bump ## to ###, leave the rest
-                    recipe_md = re.sub(
-                        r'^#\\s*(.+?)(?:\\n|$).*', '', recipe_text,
-                        flags=re.MULTILINE|re.IGNORECASE
-                    )
-                    recipe_md = re.sub(
-                        r'^##\\s*(.*)$', r'### \1',
-                        recipe_md, flags=re.MULTILINE
-                    )
+                    # --- Clean recipe markdown ---
+                    recipe_md = re.sub(title_pattern + r'.*', '', recipe_text, flags=re.MULTILINE | re.IGNORECASE)
+                    recipe_md = re.sub(r'^##\s*(.*)$', r'### \1', recipe_md, flags=re.MULTILINE)
 
-                    # Display the recipe
+                    st.markdown(f"### {recipe_title}")
                     st.markdown(recipe_md, unsafe_allow_html=True)
 
-                    # Export PDF button at the end of the recipe
-                    export = st.button('Get A Copy', use_container_width=True)
-                    if export:
-                        try:
-                            safe_name = re.sub(r'[^\w\-_\. ]', '_', recipe_title).replace(' ', '_')
-                            buf = generate_pdf(recipe_text)
-                            st.download_button(
-                                'Download Recipe PDF',
-                                data=buf.getvalue(),
-                                file_name=f'{safe_name}_recipe.pdf',
-                                mime='application/pdf',
-                                use_container_width=True
-                            )
-                        except Exception as e:
-                            st.error(f'Could not generate PDF: {e}')
-
-        else:
-            st.warning("🤔 Please enter some ingredients first!")
+    # Shows PDF export button only if the recipe is generated
+    if st.session_state.recipe_text and st.session_state.recipe_title:
+        # Generate PDF only when needed
+        if 'pdf_bytes' not in st.session_state or 'pdf_name' not in st.session_state:
+            result = handle_pdf_generation(st.session_state.recipe_text, 
+                                         st.session_state.recipe_title)
+            if result:
+                st.session_state.pdf_bytes, st.session_state.pdf_name = result
+        
+        # Shows download button if PDF is ready
+        if 'pdf_bytes' in st.session_state and 'pdf_name' in st.session_state:
+            st.download_button('Get A Copy',
+                             data=st.session_state.pdf_bytes,
+                             file_name=f"{st.session_state.pdf_name}_recipe.pdf",
+                             mime='application/pdf',
+                             use_container_width=True,
+                             key="export_pdf_btn")
 
     # --- Footer ---
     st.markdown("---") # Use markdown for separator
     st.markdown(
         """
         <div style='text-align:center; color: #888;'>
-            Powered by <b>Google Gemini AI</b> | View on <a href='https://github.com/your-repo' target='_blank'>GitHub</a>
+            Powered by <b>Google Gemini AI</b> | View on <a href='https://github.com/aniketpotabatti/GenAIHub/tree/main/Dishcovery' target='_blank'>GitHub</a>
         </div>
         """,
         unsafe_allow_html=True
