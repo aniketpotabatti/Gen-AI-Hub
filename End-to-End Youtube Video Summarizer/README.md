@@ -2,6 +2,9 @@
 
 A Streamlit-based web application that allows users to input a YouTube URL and get an AI-powered summary of the video, including transcript extraction, metadata, and structured summaries.
 
+### <i>Demo</i>
+https://github.com/user-attachments/assets/800d4f28-0062-488d-84df-dc02e065a4ee
+
 ## Features
 
 - **YouTube Transcript Extraction**: Automatically fetches and processes video transcripts
