@@ -1,5 +1,9 @@
 # Dishcovery
 
+
+https://github.com/user-attachments/assets/b6b24de3-9613-499e-b1b2-9321dfc30657
+
+
 ## Setup Instructions
 
 1. Create a virtual environment:
