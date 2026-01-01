@@ -1,7 +1,7 @@
 # Dishcovery
 
 
-https://github.com/user-attachments/assets/b6b24de3-9613-499e-b1b2-9321dfc30657
+https://github.com/user-attachments/assets/1be63955-3163-4912-ad43-da55a936935c
 
 
 ## Setup Instructions
