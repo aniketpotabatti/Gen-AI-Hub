@@ -8,8 +8,6 @@ load_dotenv()
 
 try:
     api_key = os.getenv('GOOGLE_API_KEY')
-    if not api_key:
-        raise ValueError("Google API Key not found. Please set it in your .env file.")
     genai.configure(api_key=api_key)
 except ValueError as e:
     st.error(e)
