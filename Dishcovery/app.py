@@ -1,3 +1,9 @@
+"""
+Author: @aniketpotabatti
+Project: Dishcovery
+Created: 2024-04-30
+"""
+
 import streamlit as st
 import os
 import google.generativeai as genai
