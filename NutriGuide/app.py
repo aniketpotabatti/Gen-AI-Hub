@@ -1,4 +1,9 @@
-# NutriGuide App 
+"""
+Author: @aniketpotabatti
+Project: NutriGuide App
+Created: 2024-03-22
+"""
+
 import streamlit as st
 import google.generativeai as genai
 import os
@@ -147,3 +152,4 @@ Format:
 ...
 Summary at the end.
 """
+
