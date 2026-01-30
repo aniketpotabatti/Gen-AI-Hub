@@ -1,3 +1,9 @@
+"""
+Author: @aniketpotabatti
+Project: PdfPal
+Created: 2024-01-15
+"""
+
 import streamlit as st
 from llm import generate_answer
 import os
@@ -121,3 +127,4 @@ if __name__ == "__main__":
     except Exception as e:
         st.error(f"Critical Error: {e}")
         st.stop()
+
