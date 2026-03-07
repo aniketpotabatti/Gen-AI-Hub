@@ -22,7 +22,7 @@ def main():
     <style>
     .user-message { 
         display: flex; 
-        justify-content: flex-end; 
+        justify-content: flex-end;  
         margin-bottom: 10px; 
     }
     .assistant-message { 
@@ -31,9 +31,9 @@ def main():
         margin-bottom: 10px; 
     }
     .user-message div {
-        background-color: rgba(255, 255, 255, 0.2);
+        background-color: rgba(13, 178, 191, 0.5);
         padding: 15px; 
-        border-radius: 10px; 
+        border-radius: 30px;
         max-width: 100%;
         word-wrap: break-word; 
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -127,4 +127,5 @@ if __name__ == "__main__":
     except Exception as e:
         st.error(f"Critical Error: {e}")
         st.stop()
+
 
