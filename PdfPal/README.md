@@ -1,6 +1,8 @@
 # PdfPal
 
-PdfPal is a simple and elegant Streamlit application that allows you to chat with your documents. Upload PDF files or provide URLs, and ask questions about their content using the power of Groq's LLM models and Hugging Face embeddings.
+PdfPal is a Streamlit-based AI application that allows users to chat with PDFs and web pages. Users can upload multiple PDF files or provide URLs, and the app processes the content using embeddings and a RAG (Retrieval-Augmented Generation) pipeline to understand the documents. When a user asks a question, the system retrieves the most relevant information and generates accurate, context-aware answers using Groq-powered LLMs, making it easier to explore and extract insights from large documents.
+
+https://github.com/user-attachments/assets/0dc3b36a-81fd-481c-8095-31192c6f52bc
 
 ## 🛠️ Technical Details
 
