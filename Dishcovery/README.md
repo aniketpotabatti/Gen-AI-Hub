@@ -71,3 +71,7 @@ streamlit run app.py
 I plan to expand this project by adding:
 1. Image Recognition: Snap a photo of your fridge to auto-detect ingredients.
 2. RAG Integration: Connect it to a database of verified chef recipes for more "authentic" results.
+---
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
