@@ -4,6 +4,8 @@ https://github.com/user-attachments/assets/1be63955-3163-4912-ad43-da55a936935c
 
 Discover delicious recipes with the ingredients you already have at home! Dishcovery uses Google's Gemini AI to generate creative and personalized recipes based on your preferences.
 
+---
+
 ## Key Features
 
 - **Ingredient-Based Recipe Generation**: Enter the ingredients you have, and get a complete recipe in seconds.
@@ -11,6 +13,8 @@ Discover delicious recipes with the ingredients you already have at home! Dishco
 - **Allergy-Aware**: Exclude common allergens to ensure your recipes are safe for you and your family.
 - **Download as PDF**: Save your favorite recipes as a beautifully formatted PDF file for offline access.
 - **Powered by Gemini**: Utilizes the `gemini-2.5-flash` model for fast and creative recipe ideas.
+
+---
 
 ## Getting Started
 
@@ -53,6 +57,7 @@ Once the setup is complete, run the following command to start the Streamlit app
 ```bash
 streamlit run app.py
 ```
+---
 
 ## Usage
 
@@ -60,3 +65,9 @@ streamlit run app.py
 2.  Use the sidebar to set your preferences (e.g., dietary, cuisine, allergies).
 3.  Click "Generate Recipe" to get your custom recipe.
 4.  If you like the recipe, click "Download PDF" to save it.
+---
+
+## What's Next?
+I plan to expand this project by adding:
+1. Image Recognition: Snap a photo of your fridge to auto-detect ingredients.
+2. RAG Integration: Connect it to a database of verified chef recipes for more "authentic" results.
