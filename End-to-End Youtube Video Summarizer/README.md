@@ -1,82 +1,88 @@
-# YouTube Video Summarizer
+# <img src="youtube.png" width="32px" height="35px"> YT Summarizer</img>
 
-A Streamlit-based web application that allows users to input a YouTube URL and get an AI-powered summary of the video, including transcript extraction, metadata, and structured summaries.
+Paste any YouTube URL — get a clean AI-powered summary instantly. Built with Streamlit and Google Gemini.
 
-### <i>Demo</i>
-https://github.com/user-attachments/assets/800d4f28-0062-488d-84df-dc02e065a4ee
+## Video Overview
 
-## Features
 
-- **YouTube Transcript Extraction**: Automatically fetches and processes video transcripts
-- **AI-Powered Summaries**: Uses Google Gemini AI to generate comprehensive summaries
-- **Video Metadata Display**: Shows title, channel, views, likes, publish date, and thumbnail
-- **Professional UI**: Clean, responsive interface with YouTube branding
-- **Date Formatting**: Displays publish dates in dd-mm-yyyy format
-- **Error Handling**: Robust handling of missing data or API issues
+https://github.com/user-attachments/assets/19abbc0d-c0e7-45d2-81c3-ee66eabf18c3
 
-## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd End-to-End-Youtube-Video-Summarizer
-   ```
+## ✨ Features
 
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+- **AI Summaries** — Generates structured summaries (topics, key takeaways, detailed summary, audience fit) using Google Gemini
+- **Adjustable Depth** — Choose between Quick (~100 words), Standard (~300), or Deep Dive (~600)
+- **Q&A Chat** — Ask follow-up questions about the video, answered from the transcript
+- **Video Metadata** — Displays thumbnail, channel, views, likes, duration, publish date, and language
+- **Export** — Download summaries as Markdown or CSV
+- **Session History** — Sidebar keeps track of previously summarized videos for quick reload
+- **Multi-Language** — Automatically detects and fetches the best available transcript language
+- **Dark Minimal UI** — Custom-styled dark theme with Inter font and indigo accents
 
-3. Set up environment variables:
-   Create a `.env` file in the root directory and add your Google API key:
-   ```
-   GOOGLE_API_KEY=your_google_api_key_here
-   ```
+## 🚀 Quick Start
 
-4. Run the application:
-   ```bash
-   streamlit run app.py
-   ```
+### 1. Clone & install
 
-## Usage
-
-1. Open the app in your browser (usually http://localhost:8501)
-2. Enter a YouTube URL in the text input field
-3. Click "Summarize" to get the video summary
-4. View the extracted metadata and AI-generated summary
-
-## Requirements
-
-- Python 3.8+
-- yt-dlp
-- python-dotenv
-- streamlit
-- google-generativeai
-
-## Project Structure
-
-```
-End-to-End-Youtube-Video-Summarizer/
-├── app.py              # Main Streamlit application
-├── requirements.txt    # Python dependencies
-├── .env                # Environment variables (not in repo)
-├── README.md           # This file
-├── .gitignore          # Git ignore rules
-└── youtube.png         # YouTube logo (optional)
+```bash
+git clone <repository-url>
+cd End-to-End-Youtube-Video-Summarizer
+pip install -r requirements.txt
 ```
 
-## Contributing
+### 2. Add your API key
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+Create a `.env` file:
 
-## License
+```
+GOOGLE_API_KEY=your_google_api_key_here
+```
 
-This project is open source and available under the MIT License.
+Optionally set a custom model:
 
-## Troubleshooting
+```
+GEMINI_MODEL=gemini-2.5-flash
+```
 
-- Ensure your Google API key is valid and set in .env
-- For transcript issues, check if the video has captions available
+### 3. Run
+
+```bash
+streamlit run app.py
+```
+
+Open [http://localhost:8501](http://localhost:8501) in your browser.
+
+## 📦 Tech Stack
+
+| Component | Library |
+|-----------|---------|
+| UI | Streamlit |
+| AI | Google Gemini (`google-generativeai`) |
+| Transcripts | `youtube-transcript-api` |
+| Metadata | `yt-dlp` |
+| Config | `python-dotenv` |
+
+## 📁 Project Structure
+
+```
+├── app.py                 # Single-file app (UI, logic, CSS — ~265 lines)
+├── requirements.txt       # Pinned dependencies
+├── .env                   # API key (not committed)
+├── .streamlit/
+│   └── config.toml        # Streamlit theme config
+├── youtube.png            # App logo
+├── .gitignore
+└── README.md
+```
+
+## 🛠 Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `GOOGLE_API_KEY missing` | Create a `.env` file with your key |
+| `No transcript available` | The video may not have captions — try a different video |
+| Module not found | Run `pip install -r requirements.txt` |
+
+## 📄 License
+
+
+This project is licensed under the [MIT License](LICENSE).
