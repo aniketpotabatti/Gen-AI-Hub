@@ -2,6 +2,8 @@
 
 Paste any YouTube URL — get a clean AI-powered summary instantly. Built with Streamlit and Google Gemini.
 
+<b>Created:</b> Oct 22, 2025
+
 ## Video Overview
 
 
