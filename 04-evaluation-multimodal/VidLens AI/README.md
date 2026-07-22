@@ -24,7 +24,6 @@ VidLens AI/
 ├── agent.py         # Core agent orchestration logic combining Gemini and search
 ├── utils.py         # Helper functions for video upload and search result formatting
 ├── requirements.txt # Python package dependencies
-└── Note.txt         # Project description reference
 ```
 
 ---
