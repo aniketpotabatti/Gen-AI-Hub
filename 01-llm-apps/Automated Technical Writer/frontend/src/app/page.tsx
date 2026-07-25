@@ -95,7 +95,7 @@ export default function HomePage() {
             Start Writing for Free →
           </Link>
           <a
-            href="https://github.com"
+            href="https://github.com/aniketpotabatti/GenAIHub/tree/main/01-llm-apps/Automated%20Technical%20Writer"
             target="_blank"
             rel="noopener noreferrer"
             className="px-8 py-4 rounded-xl border border-white/10 text-white/70 font-semibold text-lg hover:bg-white/5 hover:text-white transition-all"
