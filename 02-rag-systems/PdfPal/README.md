@@ -1,8 +1,12 @@
-# 📃PdfPal
+<h1 align="center">
+  <img src="assets/logo.png" width="50" height="50" align="center" />
+  PdfPal
+</h1>
+
 
 PdfPal is an intuitive Retrieval-Augmented Generation (RAG) tool that lets you chat with your PDF files and web pages using your preferred AI models.
 
-https://github.com/user-attachments/assets/0dc3b36a-81fd-481c-8095-31192c6f52bc
+<!--https://github.com/user-attachments/assets/0dc3b36a-81fd-481c-8095-31192c6f52bc-->
 
 
 ## Features
