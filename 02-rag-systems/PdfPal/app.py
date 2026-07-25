@@ -6,6 +6,7 @@ Created: 2024-01-15
 
 import os
 import shutil
+import base64
 import streamlit as st
 from config import PROVIDER_MODELS
 from llm import generate_answer
@@ -42,7 +43,7 @@ def render_sidebar():
             provider_api_key = st.text_input(
                 f"{selected_provider} API Key",
                 type="password",
-                help=f"Enter your {selected_provider} API key. If blank, the environment variable will be used.",
+                help=f"Enter your {selected_provider} API key. If blank, environment variable will be used.",
                 key="provider_api_key",
             )
 
@@ -79,35 +80,83 @@ def render_sidebar():
     return selected_provider, selected_model, provider_api_key, hf_api_key
 
 
-def render_header(provider: str, model: str):
-    """Renders top fixed application header with provider badge."""
+def render_header():
+    """Fixed position header for the application."""
+    logo_path = os.path.join("assets", "logo_transparent.png")
+    if not os.path.exists(logo_path):
+        logo_path = os.path.join("assets", "logo.png")
+
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as f:
+            encoded_logo = base64.b64encode(f.read()).decode("utf-8")
+        logo_html = f'<img src="data:image/png;base64,{encoded_logo}" style="height: 44px; width: 44px; margin-right: 12px; vertical-align: middle; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(13, 178, 191, 0.5));">'
+    else:
+        logo_html = ""
+
     st.markdown(
         f"""
-    <div style="position: fixed; top: 0; left: 0; right: 0; z-index: 100; background-color: #1A1A1A; height: 80px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <h1 style="font-size: 2.2rem; font-weight: 700; margin: 0; line-height: 1; color: white;">PdfPal</h1>
-        <p style="font-style: italic; font-size: 0.85rem; color: #0DB2BF; margin: 4px 0 0 0;">powered by {provider} ({model})</p>
-    </div>
-    <div style="height: 90px;"></div>
-    """,
+        <style>
+        /* Pad main block container so chat messages start below fixed header */
+        .block-container {{
+            padding-top: 6.5rem !important;
+            padding-bottom: 5rem !important;
+        }}
+
+        /* 100% Stationary Fixed Top Header Bar */
+        .pdfpal-stationary-header {{
+            position: fixed;
+            top: 3.5rem;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background-color: #0E1117 !important;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }}
+
+        .pdfpal-title {{
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            margin: 0;
+            display: inline-block;
+            vertical-align: middle;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #FFFFFF 65%, #0DB2BF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }}
+        </style>
+
+        <div class="pdfpal-stationary-header">
+            {logo_html}
+            <h1 class="pdfpal-title">PdfPal</h1>
+        </div>
+        """,
         unsafe_allow_html=True,
     )
 
 
 def render_chat_history():
-    """Renders historical chat messages using Streamlit native components."""
+    """Renders historical chat messages using Streamlit native components with custom avatars."""
     for role, message in st.session_state.chat_history:
-        with st.chat_message(role):
+        avatar = "👤" if role == "user" else "🤖"
+        with st.chat_message(role, avatar=avatar):
             st.markdown(message)
 
 
 def handle_chat_input(provider: str, model: str, provider_api_key: str, hf_api_key: str):
     """Handles user query submission, RAG invocation, and UI state updates."""
     if user_input := st.chat_input("Ask about your documents..."):
-        # Append User Question
+        # Append & display User Question instantly
         st.session_state.chat_history.append(("user", user_input))
 
         # Generate & Append Assistant Answer
-        with st.spinner(f"Generating response via {provider}..."):
+        with st.spinner(f"Thinking via {provider}..."):
             response = generate_answer(
                 question=user_input,
                 provider=provider,
@@ -123,11 +172,12 @@ def handle_chat_input(provider: str, model: str, provider_api_key: str, hf_api_k
 
 def main():
     """Main application entry point."""
-    st.set_page_config(page_title="PdfPal", page_icon="📃", layout="centered")
+    logo_file = "assets/logo_transparent.png" if os.path.exists("assets/logo_transparent.png") else "assets/logo.png"
+    st.set_page_config(page_title="PdfPal", page_icon=logo_file if os.path.exists(logo_file) else "📄", layout="centered")
     init_session_state()
 
     provider, model, provider_key, hf_key = render_sidebar()
-    render_header(provider, model)
+    render_header()
     render_chat_history()
     handle_chat_input(provider, model, provider_key, hf_key)
 
