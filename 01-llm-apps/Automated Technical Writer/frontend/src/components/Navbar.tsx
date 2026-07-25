@@ -40,7 +40,7 @@ export default function Navbar() {
             Editor
           </Link>
           <a
-            href="https://github.com"
+            href="https://github.com/aniketpotabatti/GenAIHub/tree/main/01-llm-apps/Automated%20Technical%20Writer"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-white/60 hover:text-white/90 transition-colors flex items-center gap-1.5"
