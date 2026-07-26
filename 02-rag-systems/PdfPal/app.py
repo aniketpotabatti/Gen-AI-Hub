@@ -1,8 +1,3 @@
-"""
-Author: @aniketpotabatti
-Project: PdfPal
-Created: 2024-01-15
-"""
 import os
 import shutil
 import base64
@@ -88,26 +83,33 @@ def render_header():
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as f:
             encoded_logo = base64.b64encode(f.read()).decode("utf-8")
-        logo_html = f'<img src="data:image/png;base64,{encoded_logo}" style="height: 44px; width: 44px; margin-right: 12px; vertical-align: middle; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(13, 178, 191, 0.5));">'
+        logo_html = f'<img src="data:image/png;base64,{encoded_logo}" style="height: 38px; width: 38px; margin-right: 12px; vertical-align: middle; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(13, 178, 191, 0.5));">'
     else:
         logo_html = ""
 
     st.markdown(
         f"""
         <style>
+        /* Streamlit native header bar styling */
+        header[data-testid="stHeader"] {{
+            background-color: transparent !important;
+            z-index: 10000 !important;
+            height: 3.5rem !important;
+        }}
+
         /* Pad main block container so chat messages start below fixed header */
         .block-container {{
-            padding-top: 6.5rem !important;
+            padding-top: 4.8rem !important;
             padding-bottom: 5rem !important;
         }}
 
         /* 100% Stationary Fixed Top Header Bar */
         .pdfpal-stationary-header {{
             position: fixed;
-            top: 3.5rem;
+            top: 0rem;
             left: 0;
             right: 0;
-            height:70px;
+            height:56px;
             background-color: #1A1A1A !important;
             z-index: 9999;
             display: flex;
@@ -118,7 +120,7 @@ def render_header():
         }}
 
         .pdfpal-title {{
-            font-size: 2.6rem;
+            font-size: 2.3rem;
             font-weight: 800;
             color: #FFFFFF;
             margin: ;
