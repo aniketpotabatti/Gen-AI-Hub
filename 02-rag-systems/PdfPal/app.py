@@ -107,7 +107,7 @@ st.markdown(
             content: "";
             position: absolute;
             left: 41%;
-            top: 38%;
+            top: 50%;
             transform: translate(-50%, -50%);
             width: 500px;
             height: 100%;
