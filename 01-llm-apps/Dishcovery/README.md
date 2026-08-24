@@ -1,6 +1,6 @@
-# Dishcovery 🍲
-
-https://github.com/user-attachments/assets/1be63955-3163-4912-ad43-da55a936935c
+<p align="center">
+  <img src="assets/Discovery logo.png" alt="Dishcovery Logo" width="50%">
+</p>
 
 Discover delicious recipes with the ingredients you already have at home! Dishcovery uses Google's Gemini AI to generate creative and personalized recipes based on your preferences.
 

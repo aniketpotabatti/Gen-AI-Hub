@@ -4,15 +4,59 @@ Project: Dishcovery
 Created: 2024-04-30
 """
 
+import base64
+from pathlib import Path
+
 import streamlit as st
 import google.generativeai as genai
 from fpdf import FPDF
 
+LOGO_PATH = Path(__file__).parent / "assets" / "Discovery logo.png"
+
 st.set_page_config(
     page_title="Dishcovery - AI Recipe Generator",
-    page_icon="🍽️",
+    page_icon=str(LOGO_PATH),
     layout="wide"
 )
+
+# Custom CSS for advanced UI design (no main title)
+st.markdown("""
+<style>
+/* Page background */
+body {
+    background: linear-gradient(135deg, #f0f4f8, #e0eafc);
+    background-attachment: fixed;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* Card container for recipe output */
+.recipe-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    line-height: 1.6;
+}
+
+/* Sidebar styling */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #23272a, #191B1C);
+}
+
+/* Button enhancements */
+.stButton > button {
+    font-weight: bold;
+    border-radius: 12px;
+    padding: 10px 24px;
+    transition: transform 0.1s ease;
+}
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Core Logic 
 def generate_recipe_prompt(ingredients, dietary_prefs=None, recipe_type=None, cuisine=None, servings=None, allergies=None, cooking_time=None, difficulty=None):
@@ -113,9 +157,9 @@ def create_pdf(text):
         if not line:
             continue
 
-        if line.startswith('# '):
+        if line.startswith('## '):
             style = styles['##']
-            content = line[2:].strip()
+            content = line[3:].strip()
             set_font_style(pdf, style['style'], style['size'])
             pdf.multi_cell(0, style['ln'], content, align=style['align'], ln=1)
             if style.get('space'): pdf.ln(style['space'])
@@ -126,6 +170,15 @@ def create_pdf(text):
             set_font_style(pdf, style['style'], style['size'])
             pdf.multi_cell(0, style['ln'], content, ln=1)
             if style.get('space_after'): pdf.ln(style['space_after'])
+
+        elif line.startswith('### '):
+            style = styles['###']
+            content = line[4:].strip()
+            if style.get('space_before'): pdf.ln(style['space_before'])
+            set_font_style(pdf, style['style'], style['size'])
+            pdf.multi_cell(0, style['ln'], content, ln=1)
+            if style.get('space_after'): pdf.ln(style['space_after'])
+
         elif line.startswith('**') and line.endswith('**'):
             style = styles['**']
             content = line[2:-2].strip()
@@ -133,6 +186,7 @@ def create_pdf(text):
             set_font_style(pdf, style['style'], style['size'])
             pdf.multi_cell(0, style['ln'], content, ln=1)
             if style.get('space_after'): pdf.ln(style['space_after'])
+            
         elif line.startswith('*'):
             style = styles['*']
             set_font_style(pdf, style['style'], style['size'])
@@ -194,47 +248,30 @@ st.markdown("""<style>
 }
 </style>""", unsafe_allow_html=True)
 
-# Inject app title into the native Streamlit header via CSS
-st.markdown("""
+# Inject app logo and title into the native Streamlit header via CSS
+logo_b64 = base64.b64encode(LOGO_PATH.read_bytes()).decode()
+st.markdown(f"""
 <style>
-header[data-testid="stHeader"] {
+header[data-testid="stHeader"] {{
     position: relative;
     overflow: visible;
-}
-header[data-testid="stHeader"]::before {
-    content: "Dishcovery";
+}}
+header[data-testid="stHeader"]::before {{
+    content: "";
     position: absolute;
-    left: 50%;
+    left: 41%;
     top: 38%;
     transform: translate(-50%, -50%);
-    font-weight: 700;
-    font-size: 2.5rem;
-    background: linear-gradient(90deg, #7bd47f, #ffffff 90%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    color: transparent;
+    width: 500px;
+    height: 100%;
+    background: url("data:image/png;base64,{logo_b64}") center / contain no-repeat;
+    filter:drop-shadow(0 0 14px rgb(197, 236, 198, 0.75));
     z-index: 1000;
     pointer-events: none;
-    white-space: nowrap;
-}
-header[data-testid="stHeader"]::after {
-    content: "Discover recipes with the ingredients you have!";
-    position: absolute;
-    left: 50%;
-    top: 85%;  /* Moved further down from 68% */
-    transform: translate(-50%, -50%);
-    font-weight: 300;
-    font-size: 1rem;
-    color: inherit;
-    opacity: 0.85;
-    z-index: 1000;
-    pointer-events: none;
-    white-space: nowrap;
-}
+}}
 </style>
 """, unsafe_allow_html=True)
-
+st.markdown("#### Discover recipes with the ingredients you have!")
 st.sidebar.title("Preferences")
 
 # API key input
@@ -284,25 +321,27 @@ def handle_recipe_generation(ingredients_str):
         st.session_state.recipe = recipe_text
 
 # Sidebar buttons
-col1, col2 = st.sidebar.columns(2)
+# Single column in sidebar for both buttons
 if 'recipe' in st.session_state and st.session_state.get('ingredients_input'):
-    if col1.button("Update Recipe", key="update_button", use_container_width=True):
+    if st.sidebar.button("Update Recipe", key="update_button", use_container_width=True):
         handle_recipe_generation(st.session_state.ingredients_input)
         st.rerun()
 
-if col2.button("Reset", key="reset_button", use_container_width=True):
+if st.sidebar.button("Reset", key="reset_button", use_container_width=True):
     st.session_state.clear()
     st.rerun()
-# Ingredients input
-ingredients = st.text_input("Enter your ingredients (comma-separated)", key="ingredients_input")
 
+# Ingredients input and Generate button below the sidebar, one column layout
+ingredients = st.text_input("Enter your ingredients (comma-separated)", key="ingredients_input")
 if st.button("Generate Recipe", type="primary"):
     handle_recipe_generation(ingredients)
 
+# Display the generated recipe inside a styled card
 if 'recipe' in st.session_state:
     st.markdown(st.session_state.recipe)
+    st.markdown("</div>", unsafe_allow_html=True)
     
-    # Download button
+    # Download button (styled via existing CSS)
     pdf_bytes = create_pdf(st.session_state.recipe)
     st.download_button(
         label="📄 Download PDF",
