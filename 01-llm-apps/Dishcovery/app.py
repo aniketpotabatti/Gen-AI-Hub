@@ -5,18 +5,14 @@ Created: 2024-04-30
 """
 
 import streamlit as st
-import os
 import google.generativeai as genai
-from dotenv import load_dotenv
 from fpdf import FPDF
 
-load_dotenv()
-
-try:
-    api_key = os.getenv('GOOGLE_API_KEY')
-    genai.configure(api_key=api_key)
-except ValueError as e:
-    st.error(e)
+st.set_page_config(
+    page_title="Dishcovery - AI Recipe Generator",
+    page_icon="🍽️",
+    layout="wide"
+)
 
 # Core Logic 
 def generate_recipe_prompt(ingredients, dietary_prefs=None, recipe_type=None, cuisine=None, servings=None, allergies=None, cooking_time=None, difficulty=None):
@@ -170,9 +166,6 @@ def create_pdf(text):
 
     return bytes(pdf.output())
 
-# APP TITLE
-st.title("Dishcovery")
-st.write("Discover recipes with the ingredients you have!")
 st.markdown("""<style>
 .stButton > button {
     font-weight: bold;
@@ -201,8 +194,65 @@ st.markdown("""<style>
 }
 </style>""", unsafe_allow_html=True)
 
+# Inject app title into the native Streamlit header via CSS
+st.markdown("""
+<style>
+header[data-testid="stHeader"] {
+    position: relative;
+    overflow: visible;
+}
+header[data-testid="stHeader"]::before {
+    content: "Dishcovery";
+    position: absolute;
+    left: 50%;
+    top: 38%;
+    transform: translate(-50%, -50%);
+    font-weight: 700;
+    font-size: 2.5rem;
+    background: linear-gradient(90deg, #7bd47f, #ffffff 90%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    z-index: 1000;
+    pointer-events: none;
+    white-space: nowrap;
+}
+header[data-testid="stHeader"]::after {
+    content: "Discover recipes with the ingredients you have!";
+    position: absolute;
+    left: 50%;
+    top: 85%;  /* Moved further down from 68% */
+    transform: translate(-50%, -50%);
+    font-weight: 300;
+    font-size: 1rem;
+    color: inherit;
+    opacity: 0.85;
+    z-index: 1000;
+    pointer-events: none;
+    white-space: nowrap;
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.sidebar.title("Preferences")
+
+# API key input
+if "api_key" not in st.session_state:
+    st.session_state.api_key = ""
+
+st.session_state.api_key = st.sidebar.text_input(
+    "Google API Key", 
+    type="password", 
+    value=st.session_state.api_key,
+    key="api_key_input"
+)
+
+if st.session_state.api_key:
+    genai.configure(api_key=st.session_state.api_key)
+elif 'recipe' not in st.session_state:
+    st.sidebar.warning("Please enter your Google API key to generate recipes.")
+
 dietary_prefs = st.sidebar.selectbox("Dietary Preference", ["None", "Vegetarian", "Vegan", "Non-Vegetarian", "Gluten-Free", "Dairy-Free", "Keto", "Paleo", "Low-Carb", "Low-Fat", "High-Protein", "Mediterranean", "Pescatarian"], key="dietary_prefs")
 cuisine = st.sidebar.selectbox("Cuisine", ["None", "Italian", "Mexican", "Indian", "Chinese", "Japanese", "Thai", "French", "Mediterranean", "American", "Greek", "Spanish", "Middle Eastern", "Korean", "Vietnamese", "Ethiopian", "Moroccan", "Caribbean", "Brazilian", "German", "Russian", "African", "Australian", "Peruvian", "Argentinian", "Turkish", "Pakistani", "Bengali", "Nepalese", "Sri Lankan", "Malaysian", "Indonesian", "Filipino", "Singaporean", "Burmese", "Cambodian", "Laotian", "Tibetan", "Mongolian", "Central American", "South American", "Eastern European", "Western European", "Northern European", "Southern European", "Oceanic", "Fusion", "Other"], key="cuisine")
 allergies = st.sidebar.multiselect("Allergies", ["None", "Peanuts", "Tree Nuts", "Dairy", "Eggs", "Wheat", "Soy", "Fish", "Shellfish", "Sesame", "Mustard", "Celery", "Lupin", "Molluscs", "Sulphites"], key="allergies")
