@@ -2,10 +2,18 @@ import os
 import shutil
 import base64
 import streamlit as st
+from pathlib import Path
 from config import PROVIDER_MODELS
 from llm import generate_answer
 from utils import process_content
 
+LOGO_PATH = Path(__file__).parent / "assets" / "pdfpal logo.png"
+
+st.set_page_config(
+    page_title="Pdfpal - Chat with PDFs and Files",
+    page_icon=str(LOGO_PATH),
+    layout="wide"
+)
 
 def init_session_state():
     """Initializes Streamlit session state variables."""
@@ -16,7 +24,7 @@ def init_session_state():
 def render_sidebar():
     """Renders sidebar controls, API configuration, and document upload forms."""
     with st.sidebar:
-        st.title("PdfPal Controls")
+        st.title("Controls")
 
         # API & Model Settings
         with st.expander("⚙️ API & Model Settings", expanded=True):
@@ -76,9 +84,7 @@ def render_sidebar():
 
 def render_header():
     """fixed header"""
-    logo_path = os.path.join("assets", "logo_transparent.png")
-    if not os.path.exists(logo_path):
-        logo_path = os.path.join("assets", "logo.png")
+    logo_path = os.path.join("assets", "pdfpal logo.png")
 
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as f:
@@ -87,7 +93,8 @@ def render_header():
     else:
         logo_html = ""
 
-    st.markdown(
+logo_b64 = base64.b64encode(LOGO_PATH.read_bytes()).decode()
+st.markdown(
         f"""
         <style>
         /* Streamlit native header bar styling */
@@ -96,47 +103,20 @@ def render_header():
             z-index: 10000 !important;
             height: 3.5rem !important;
         }}
-
-        /* Pad main block container so chat messages start below fixed header */
-        .block-container {{
-            padding-top: 4.8rem !important;
-            padding-bottom: 5rem !important;
-        }}
-
-        /* 100% Stationary Fixed Top Header Bar */
-        .pdfpal-stationary-header {{
-            position: fixed;
-            top: 0rem;
-            left: 0;
-            right: 0;
-            height:56px;
-            background-color: #1A1A1A !important;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-        }}
-
-        .pdfpal-title {{
-            font-size: 2.3rem;
-            font-weight: 800;
-            color: #FFFFFF;
-            margin: ;
-            display: inline-block;
-            vertical-align: middle;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #FFFFFF 65%, #0DB2BF 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        header[data-testid="stHeader"]::before {{
+            content: "";
+            position: absolute;
+            left: 41%;
+            top: 38%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 100%;
+            background: url("data:image/png;base64,{logo_b64}") center / contain no-repeat;
+            filter:drop-shadow(0 0 14px rgb(197, 236, 198, 0.75));
+            z-index: 1000;
+            pointer-events: none;
         }}
         </style>
-
-        <div class="pdfpal-stationary-header">
-            {logo_html}
-            <h1 class="pdfpal-title">PdfPal</h1>
-        </div>
         """,
         unsafe_allow_html=True,
     )
@@ -173,8 +153,7 @@ def handle_chat_input(provider: str, model: str, provider_api_key: str, hf_api_k
 
 def main():
     """Main application entry point."""
-    logo_file = "assets/logo_transparent.png" if os.path.exists("assets/logo_transparent.png") else "assets/logo.png"
-    st.set_page_config(page_title="PdfPal", page_icon=logo_file if os.path.exists(logo_file) else "📄", layout="centered")
+    st.set_page_config(page_title="PdfPal", page_icon="assets/pdfpal logo.png", layout="centered")
     init_session_state()
 
     provider, model, provider_key, hf_key = render_sidebar()
