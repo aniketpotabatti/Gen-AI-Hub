@@ -1,7 +1,6 @@
-<h1 align="center">
-  <img src="assets/logo.png" width="50" height="50" align="center" />
-  PdfPal
-</h1>
+<div align="center">
+  <img src="assets/pdfpal logo.png" width="50%"/>
+</div>
 
 
 PdfPal is an intuitive Retrieval-Augmented Generation (RAG) tool that lets you chat with your PDF files and web pages using your preferred AI models.
