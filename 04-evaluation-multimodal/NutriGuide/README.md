@@ -1,67 +1,87 @@
-# 🥗 NutriGuide App
+<p align="center">
+  <img src="assets/nutriguide logo.png" alt="NutriGuide Logo" width="320" />
+</p>
 
-NutriGuide App is an AI-powered nutrition analysis tool that uses Google's Gemini AI to analyze food images and provide detailed nutritional information & Diet Suggestions.
+<p align="center">
+  <b>AI-Powered Multimodal Food Calorie Estimation & Nutritional Health Assessment</b><br>
+  <sub>Powered by Google Gemini Multimodal AI · Built with Streamlit</sub>
+</p>
 
-## Features
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" />
+  <img src="https://img.shields.io/badge/Gemini%20AI-4285F4?logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-22c55e" />
+</p>
 
-- 📸 Upload food images for analysis
-- 🔍 Get detailed calorie information for each food item
-- 📊 View nutritional breakdown (carbs, fats, fibers, etc.)
-- 💡 Receive health insights and recommendations
-- 🎨 Modern, user-friendly interface
+---
 
-## Technologies Used
+## ✨ Features
 
-- Python 3.x
-- Streamlit
-- Google Gemini AI
-- PIL (Python Imaging Library)
-- python-dotenv
+- 📸 **Upload food images** for instant multimodal AI analysis
+- 🔢 **Itemized calorie estimation** per food item with portion size detection
+- 📊 **Macronutrient breakdown** — Carbs, Proteins, Fats, Fiber, Sugars
+- 💚 **Health Rating** — 🟢 Nutritious / 🟡 Moderate / 🔴 High Calorie
+- 💡 **Clinical dietary swaps** & personalized meal balancing advice
+- ⚡ **Quick Prompt Presets** — Keto, High-Protein, Salad, Fast Food
+- 📥 **Export reports** as Markdown or Text
+- 🎨 **Modern glassmorphism dark theme** UI with emerald accents
 
-## Setup
+## 🧰 Technologies Used
 
-1. Clone the repository
-2. Install dependencies:
+| Technology | Purpose |
+|---|---|
+| Python 3.9+ | Core language |
+| Streamlit | Web application framework |
+| Google Gemini AI | Multimodal image + text analysis |
+| PIL (Pillow) | Image processing |
+| python-dotenv | Environment variable management |
+
+## ⚙️ Setup
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/aniketpotabatti/Gen-AI-Hub.git
+   cd Gen-AI-Hub/04-evaluation-multimodal/NutriGuide
+   ```
+
+2. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
-3. Create a `.env` file in the project root and add your Google API key:
+
+3. **Configure your Google API key** — create a `.env` file:
    ```
    GOOGLE_API_KEY=your_api_key_here
    ```
-4. Run the application:
+   > Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com)
+
+4. **Run the application:**
    ```bash
-   NutriGuide_app.py
+   streamlit run NutriGuide_app.py
    ```
 
-## Usage
+## 🚀 Usage
 
-1. Launch the application
-2. Type any food-related query (optional)
-3. Upload a food image (JPG or PNG format)
-4. Click "Analyze & Calculate Calories"
-5. View the detailed nutritional analysis
+1. Open the app in your browser at `http://localhost:8501`
+2. Paste your **Google Gemini API Key** in the sidebar
+3. Select a **Quick Prompt Preset** or type a custom meal query
+4. **Upload a food image** (JPG, PNG, WEBP)
+5. Click **"🥗 Analyze & Calculate Calories"**
+6. Review your detailed nutritional report and export if needed
 
-## Requirements
+## 📦 Requirements
 
-See `requirements.txt` for a complete list of dependencies.
+See [`requirements.txt`](requirements.txt) for a complete list of dependencies.
 
-## Contributing
+## 🤝 Contributing
 
 Feel free to fork the repository and submit pull requests for any improvements.
 
-## License
+## 📄 License
 
-This project is open source and available under the MIT License.
+This project is open source and available under the **MIT License**.
 
-## Author
+## 👤 Author
 
-Created by [@aniketpotabatti]
-
----
-*Note: You'll need a Google API key with access to the Gemini AI model to use this application.*
-
-Video Demo ▼
-
-https://github.com/user-attachments/assets/32620a33-eaf9-4a96-a2b5-0475fc51f004
-
+Created by [@aniketpotabatti](https://github.com/aniketpotabatti)
