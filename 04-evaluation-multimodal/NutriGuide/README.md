@@ -1,6 +1,6 @@
 # 🥗 NutriGuide App
 
-NutriGuide App is an AI-powered nutrition analysis tool that uses Google's Gemini AI to analyze food images and provide detailed nutritional information.
+NutriGuide App is an AI-powered nutrition analysis tool that uses Google's Gemini AI to analyze food images and provide detailed nutritional information & Diet Suggestions.
 
 ## Features
 
@@ -31,7 +31,7 @@ NutriGuide App is an AI-powered nutrition analysis tool that uses Google's Gemin
    ```
 4. Run the application:
    ```bash
-   streamlit run app.py
+   NutriGuide_app.py
    ```
 
 ## Usage
