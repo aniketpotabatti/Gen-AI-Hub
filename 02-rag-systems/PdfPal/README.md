@@ -1,20 +1,36 @@
-<div align="center">
-  <img src="assets/pdfpal logo.png" width="50%"/>
-</div>
+<p align="center">
+  <img src="assets/pdfpal logo.png" alt="PdfPal Logo" width="250" />
+</p>
 
+<p align="center">
+  <b>AI-Powered Multisource Knowledge Retrieval & Intelligent Document Analysis</b><br>
+  <sub>Powered by LLMs & RAG · Built with Streamlit</sub>
+</p>
 
-PdfPal is an intuitive Retrieval-Augmented Generation (RAG) tool that lets you chat with your PDF files and web pages using your preferred AI models.
+<p align="center">
+  <a href="https://pdfpal-llm.streamlit.app/" style="display:inline-block; margin-bottom: 8px;">
+    <img src="https://img.shields.io/badge/Streamlit%20App-Live-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit App" />
+  </a>
+  <br>
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/Gemini%20AI-4285F4?logo=google&logoColor=white" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/License-MIT-22c55e" alt="License" />
+</p>
 
-<!--https://github.com/user-attachments/assets/0dc3b36a-81fd-481c-8095-31192c6f52bc-->
+<p align="center">
+  PdfPal is an intuitive Retrieval-Augmented Generation (RAG) tool that lets you chat with your PDF files and web pages using your preferred AI models.
+</p>
 
+<b>Project Origin:</b> March/April 2023
 
 ## Features
 
-- Multi-Source Input: Upload one or more PDF files and paste web page URLs to analyze simultaneously.
-- Multi-Provider AI Support: Choose between Groq, OpenAI, Google Gemini, Anthropic, and Mistral AI.
-- State-of-the-Art Models: Select modern models like Llama 3.3 70B, GPT-4o, Gemini 2.5 Flash, Claude 3.5 Sonnet, and Mistral Large.
-- Flexible Authentication: Enter API keys directly in the sidebar UI or store them in a local `.env` file.
-- Privacy & Local Indexing: Uses local FAISS vector storage and Hugging Face sentence-transformers embeddings for fast retrieval.
+- **Multi-Source Input**: Upload one or more PDF files and paste web page URLs to analyze simultaneously.
+- **Multi-Provider AI Support**: Choose between Groq, OpenAI, Google Gemini, Anthropic, and Mistral AI.
+- **State-of-the-Art Models**: Select modern models like Llama 3.3 70B, GPT-4o, Gemini 2.5 Flash, Claude 3.5 Sonnet, and Mistral Large.
+- **Flexible Authentication**: Enter API keys directly in the sidebar UI or store them in a local `.env` file.
+- **Privacy & Local Indexing**: Uses local FAISS vector storage and Hugging Face sentence-transformers embeddings for fast retrieval.
 
 ## How to Use PdfPal
 

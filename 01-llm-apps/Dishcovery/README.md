@@ -1,10 +1,28 @@
 <p align="center">
-  <img src="assets/Discovery logo.png" alt="Dishcovery Logo" width="50%">
+  <img src="assets/Discovery logo.png" alt="Dishcovery Logo" width="250" />
 </p>
 
-Discover delicious recipes with the ingredients you already have at home! Dishcovery uses Google's Gemini AI to generate creative and personalized recipes based on your preferences.
+<p align="center">
+  <b>AI-Powered Personalized Recipe Generation & Ingredient-Based Food Discovery</b><br>
+  <sub>Powered by Google Gemini Multimodal AI · Built with Streamlit</sub>
+</p>
 
----
+<p align="center">
+  <a href="https://dishcovery-llm.streamlit.app/" style="display:inline-block; margin-bottom: 8px;">
+    <img src="https://img.shields.io/badge/Streamlit%20App-Live-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit App" />
+  </a>
+  <br>
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/Gemini%20AI-4285F4?logo=google&logoColor=white" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/License-MIT-22c55e" alt="License" />
+</p>
+
+<p align="center">
+  Discover delicious recipes with the ingredients you already have at home! Dishcovery uses Google's Gemini AI to generate creative and personalized recipes based on your preferences.
+</p>
+
+<b>Project Origin:</b> March/April 2023
 
 ## Key Features
 

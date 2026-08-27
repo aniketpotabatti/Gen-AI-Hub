@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/nutriguide logo.png" alt="NutriGuide Logo" width="320" />
+  <img src="assets/nutriguide logo.png" alt="NutriGuide Logo" width="250" />
 </p>
 
 <p align="center">
@@ -8,13 +8,22 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" />
-  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" />
-  <img src="https://img.shields.io/badge/Gemini%20AI-4285F4?logo=google&logoColor=white" />
-  <img src="https://img.shields.io/badge/License-MIT-22c55e" />
+   <a href="https://nutriguide.streamlit.app/" style="display:inline-block; margin-bottom: 8px;">
+    <img src="https://img.shields.io/badge/Streamlit%20App-Live-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit App" />
+  </a>
+  <br>
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/Gemini%20AI-4285F4?logo=google&logoColor=white" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/License-MIT-22c55e" alt="License" />
 </p>
 
----
+<p align="center">
+  Analyze your meals and make smarter nutrition choices! <br>
+  <b>NutriGuide</b> uses Google's Gemini AI to analyze food images, estimate nutritional information, and provide personalized diet suggestions based on your meal.
+</p>
+
+<b>Project Origin:</b>  March/April 2023
 
 ## ✨ Features
 
