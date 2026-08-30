@@ -535,7 +535,8 @@ with st.sidebar:
 # Main app title
 
 with st.container(key="main_app_header", horizontal_alignment="center"):
-    st.image("src/assets/AI Data Analyst logo.png", width=400)
+    logo_path = Path(__file__).resolve().parent / "assets" / "AI Data Analyst logo.png"
+    st.image(str(logo_path), width=400)
 
 # ── Tabs
 tab_chat, tab_data, tab_insights = st.tabs(["Chat", "Data Preview", "Saved Insights"])

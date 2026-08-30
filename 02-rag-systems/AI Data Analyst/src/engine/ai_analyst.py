@@ -6,7 +6,7 @@ Routes questions to the right strategy, generates answers, and suggests charts.
 import json
 
 import pandas as pd
-from google import genai
+import google.generativeai as genai
 
 from src.engine.vector_store import VectorStore
 from src.utils.config import settings
@@ -27,23 +27,22 @@ class AIAnalyst:
     def __init__(self, api_key: str | None = None, vector_store: VectorStore | None = None):
         if not api_key:
             raise ValueError("An API key is required to initialize the analyst.")
-        self.client = genai.Client(api_key=api_key)
+        genai.configure(api_key=api_key)
         self.model = settings.gemini_model
         self.vector_store = vector_store or VectorStore(api_key=api_key)
 
     def _generate(self, prompt: str, system_instruction: str = "", temperature: float = 0.2) -> str:
         """Send a prompt to Gemini and return the text response."""
         try:
-            config = genai.types.GenerateContentConfig(
-                system_instruction=system_instruction or None,
-                temperature=temperature,
-                max_output_tokens=1500,
+            model = genai.GenerativeModel(
+                model_name=self.model,
+                system_instruction=system_instruction if system_instruction else None,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=temperature,
+                    max_output_tokens=1500,
+                )
             )
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=config,
-            )
+            response = model.generate_content(prompt)
             return response.text or ""
         except Exception as exc:
             raise GeminiServiceError(
