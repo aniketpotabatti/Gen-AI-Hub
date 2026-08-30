@@ -461,7 +461,10 @@ with st.sidebar:
                 df = load_csv_from_bytes(file_bytes, file_name)
                 st.session_state.df = df
                 st.session_state.df_name = file_name
-                st.success(f"✅ **{file_name}** loaded — {df.shape[0]:,} rows × {df.shape[1]} columns")
+                if df.empty:
+                    st.warning(f"**{file_name}** loaded but contains no rows.")
+                else:
+                    st.success(f"✅ **{file_name}** loaded — {df.shape[0]:,} rows × {df.shape[1]} columns")
 
         elif file_name.lower().endswith(".pdf"):
             if not api_key:
@@ -471,10 +474,16 @@ with st.sidebar:
                 with st.spinner("Processing PDF..."):
                     doc = load_pdf_from_bytes(file_bytes, file_name)
                     chunks = document_to_chunks(doc, settings.chunk_size, settings.chunk_overlap)
-                    vs = get_vector_store(api_key)
-                    count = vs.add_documents(chunks)
-                    st.session_state.uploaded_docs.append(file_name)
-                    st.success(f"✅ **{file_name}** indexed — {count} chunks stored")
+                    if not chunks:
+                        st.warning(
+                            f"**{file_name}** has no extractable text. "
+                            "Scanned PDFs without OCR cannot be indexed."
+                        )
+                    else:
+                        vs = get_vector_store(api_key)
+                        count = vs.add_documents(chunks)
+                        st.session_state.uploaded_docs.append(file_name)
+                        st.success(f"✅ **{file_name}** indexed — {count} chunks stored")
             else:
                 st.info(f"📄 **{file_name}** already indexed")
 
@@ -545,13 +554,13 @@ tab_chat, tab_data, tab_insights = st.tabs(["Chat", "Data Preview", "Saved Insig
 
 with tab_chat:
     # Display chat history
-    for msg in st.session_state.chat_history:
+    for i, msg in enumerate(st.session_state.chat_history):
         avatar = ":material/person:" if msg["role"] == "user" else ":material/auto_awesome:"
         with st.chat_message(msg["role"], avatar=avatar):
             st.markdown(msg["content"])
 
             if msg.get("chart"):
-                st.plotly_chart(msg["chart"], width="stretch", key=f"chart_{id(msg)}")
+                st.plotly_chart(msg["chart"], width="stretch", key=f"chart_{i}")
 
             if msg.get("sources"):
                 with st.expander("Sources", icon=":material/attach_file:"):

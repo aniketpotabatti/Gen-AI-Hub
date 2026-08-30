@@ -1,14 +1,24 @@
 """
 ChromaDB vector store wrapper.
 Handles embedding storage, similarity search, and collection management.
-Uses Google Gemini embeddings.
+Uses Google Gemini embeddings via the google-genai SDK.
 """
 
+from __future__ import annotations
+
+import gc
+import shutil
+from pathlib import Path
+
 import chromadb
-from chromadb import Documents, EmbeddingFunction, Embeddings
+import numpy as np
+from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 from google import genai
+from google.genai import types
 
 from src.utils.config import settings
+
+_EMBED_BATCH_SIZE = 100
 
 
 class GeminiEmbeddingFunction(EmbeddingFunction):
@@ -19,16 +29,36 @@ class GeminiEmbeddingFunction(EmbeddingFunction):
             raise ValueError("An API key is required to create Gemini embeddings.")
         self.client = genai.Client(api_key=api_key)
         self.model = model or settings.embedding_model
+        self.dimension = settings.embedding_dimension
+
+    def name(self) -> str:
+        return "gemini-embedding-001"
 
     def __call__(self, input: Documents) -> Embeddings:
         """Embed a list of documents using Gemini."""
-        embeddings = []
-        for text in input:
+        texts = list(input or [])
+        if not texts:
+            return []
+
+        embeddings: Embeddings = []
+        for start in range(0, len(texts), _EMBED_BATCH_SIZE):
+            batch = texts[start : start + _EMBED_BATCH_SIZE]
             result = self.client.models.embed_content(
                 model=self.model,
-                content=text,
+                contents=batch,
+                config=types.EmbedContentConfig(
+                    task_type="RETRIEVAL_DOCUMENT",
+                    output_dimensionality=self.dimension,
+                ),
             )
-            embeddings.append(result.embeddings[0].values)
+            if not result.embeddings:
+                raise RuntimeError("Gemini returned no embeddings for this batch.")
+            for item in result.embeddings:
+                values = np.asarray(item.values, dtype=np.float32)
+                norm = np.linalg.norm(values)
+                if norm > 0:
+                    values = values / norm
+                embeddings.append(values.tolist())
         return embeddings
 
 
@@ -46,31 +76,29 @@ class VectorStore:
 
         self.persist_dir = persist_dir or settings.chroma_persist_dir
         self.collection_name = collection_name or settings.chroma_collection
+        Path(self.persist_dir).mkdir(parents=True, exist_ok=True)
 
-        # Initialize ChromaDB with persistence
         self.client = chromadb.PersistentClient(path=self.persist_dir)
-
-        # Use Gemini embeddings
         self.embedding_fn = GeminiEmbeddingFunction(api_key=api_key)
+        self.collection = self._open_collection()
 
-        # Get or create collection safely (handles legacy/corrupted DB migration errors)
+    def _open_collection(self):
         try:
-            self.collection = self.client.get_or_create_collection(
+            return self.client.get_or_create_collection(
                 name=self.collection_name,
                 embedding_function=self.embedding_fn,
                 metadata={"hnsw:space": "cosine"},
             )
-        except Exception:
-            import gc
-            import shutil
-            from pathlib import Path
-
+        except Exception as exc:
+            if not _is_recoverable_chroma_error(exc):
+                raise
             gc.collect()
-            p = Path(self.persist_dir)
-            if p.exists():
-                shutil.rmtree(p, ignore_errors=True)
+            persist_path = Path(self.persist_dir)
+            if persist_path.exists():
+                shutil.rmtree(persist_path, ignore_errors=True)
+            persist_path.mkdir(parents=True, exist_ok=True)
             self.client = chromadb.PersistentClient(path=self.persist_dir)
-            self.collection = self.client.get_or_create_collection(
+            return self.client.get_or_create_collection(
                 name=self.collection_name,
                 embedding_function=self.embedding_fn,
                 metadata={"hnsw:space": "cosine"},
@@ -92,15 +120,13 @@ class VectorStore:
 
         ids = [c["id"] for c in chunks]
         documents = [c["text"] for c in chunks]
-        metadatas = [c["metadata"] for c in chunks]
+        metadatas = [_sanitize_metadata(c.get("metadata") or {}) for c in chunks]
 
-        # ChromaDB handles embedding automatically via the embedding function
         self.collection.upsert(
             ids=ids,
             documents=documents,
             metadatas=metadatas,
         )
-
         return len(chunks)
 
     def search(self, query: str, top_k: int | None = None) -> list[dict]:
@@ -115,14 +141,16 @@ class VectorStore:
             List of dicts with 'text', 'metadata', and 'score' keys,
             sorted by relevance (most relevant first).
         """
-        k = top_k or settings.top_k
+        count = self.collection.count()
+        if count == 0:
+            return []
 
+        k = min(top_k or settings.top_k, count)
         results = self.collection.query(
             query_texts=[query],
-            n_results=min(k, self.collection.count()) if self.collection.count() > 0 else k,
+            n_results=k,
         )
 
-        # Flatten ChromaDB's nested response format
         output = []
         if results and results["documents"] and results["documents"][0]:
             docs = results["documents"][0]
@@ -133,11 +161,10 @@ class VectorStore:
                 output.append(
                     {
                         "text": doc,
-                        "metadata": meta,
-                        "score": round(1 - dist, 4),  # Convert distance to similarity
+                        "metadata": meta or {},
+                        "score": round(1 - float(dist), 4),
                     }
                 )
-
         return output
 
     def get_stats(self) -> dict:
@@ -150,8 +177,10 @@ class VectorStore:
 
     def delete_collection(self):
         """Delete the entire collection."""
-        self.client.delete_collection(self.collection_name)
-        # Recreate empty collection
+        try:
+            self.client.delete_collection(self.collection_name)
+        except Exception:
+            pass
         self.collection = self.client.get_or_create_collection(
             name=self.collection_name,
             embedding_function=self.embedding_fn,
@@ -165,7 +194,35 @@ class VectorStore:
 
         all_data = self.collection.get(include=["metadatas"])
         sources = set()
-        for meta in all_data["metadatas"]:
+        for meta in all_data["metadatas"] or []:
             if meta and "source" in meta:
                 sources.add(meta["source"])
         return sorted(sources)
+
+
+def _sanitize_metadata(metadata: dict) -> dict:
+    """Chroma only accepts str, int, float, or bool metadata values."""
+    clean = {}
+    for key, value in metadata.items():
+        if value is None:
+            continue
+        if isinstance(value, (str, int, float, bool)):
+            clean[str(key)] = value
+        else:
+            clean[str(key)] = str(value)
+    return clean
+
+
+def _is_recoverable_chroma_error(exc: Exception) -> bool:
+    message = str(exc).lower()
+    markers = (
+        "no such table",
+        "schema",
+        "dimension",
+        "hnsw",
+        "corrupt",
+        "embedding function",
+        "migrations",
+        "unique constraint",
+    )
+    return any(marker in message for marker in markers)

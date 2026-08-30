@@ -3,17 +3,131 @@ AI Data Analyst - the brain of the application.
 Routes questions to the right strategy, generates answers, and suggests charts.
 """
 
-import json
+from __future__ import annotations
 
+import json
+import re
+
+import numpy as np
 import pandas as pd
-import google.generativeai as genai
-import os
+from google import genai
+from google.genai import types
+
 from src.engine.vector_store import VectorStore
 from src.utils.config import settings
+
+_SAFE_BUILTINS = {
+    "abs": abs,
+    "all": all,
+    "any": any,
+    "bool": bool,
+    "dict": dict,
+    "divmod": divmod,
+    "enumerate": enumerate,
+    "filter": filter,
+    "float": float,
+    "getattr": getattr,
+    "hasattr": hasattr,
+    "int": int,
+    "isinstance": isinstance,
+    "iter": iter,
+    "len": len,
+    "list": list,
+    "map": map,
+    "max": max,
+    "min": min,
+    "next": next,
+    "pow": pow,
+    "range": range,
+    "reversed": reversed,
+    "round": round,
+    "set": set,
+    "slice": slice,
+    "sorted": sorted,
+    "str": str,
+    "sum": sum,
+    "tuple": tuple,
+    "type": type,
+    "zip": zip,
+    "True": True,
+    "False": False,
+    "None": None,
+}
 
 
 class GeminiServiceError(RuntimeError):
     """Raised when Gemini cannot be reached or returns a transport failure."""
+
+
+def parse_model_json(raw: str) -> dict | None:
+    """Best-effort parse of a model response that should contain a JSON object."""
+    if not raw or not raw.strip():
+        return None
+
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+
+    candidates = [cleaned]
+    if not cleaned.startswith("{"):
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start != -1 and end > start:
+            candidates.append(cleaned[start : end + 1])
+
+    for candidate in candidates:
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            return parsed
+    return None
+
+
+def safe_execute(code: str, df: pd.DataFrame) -> dict:
+    """Execute AI-generated pandas code with a restricted builtin set."""
+    try:
+        local_vars = {"df": df.copy(), "pd": pd, "np": np}
+        exec(code, {"__builtins__": _SAFE_BUILTINS}, local_vars)
+        return {"result": local_vars.get("result"), "error": None}
+    except Exception as exc:
+        return {"result": None, "error": f"{type(exc).__name__}: {exc}"}
+
+
+def format_result(result) -> str:
+    """Format execution result for display."""
+    if result is None:
+        return "No result returned."
+    if isinstance(result, pd.DataFrame):
+        table = result.head(20) if len(result) > 20 else result
+        rendered = _to_table(table, index=False)
+        if len(result) > 20:
+            return f"{rendered}\n\n*...showing first 20 of {len(result)} rows*"
+        return rendered
+    if isinstance(result, pd.Series):
+        return _to_table(result, index=True)
+    return str(result)
+
+
+def _to_table(obj: pd.DataFrame | pd.Series, index: bool) -> str:
+    try:
+        if isinstance(obj, pd.DataFrame):
+            return obj.to_markdown(index=index)
+        return obj.to_markdown()
+    except (ImportError, AttributeError):
+        return obj.to_string()
+
+
+def _normalize_code(code) -> str:
+    if isinstance(code, list):
+        return "\n".join(str(line) for line in code)
+    return str(code or "").strip()
 
 
 class AIAnalyst:
@@ -27,28 +141,44 @@ class AIAnalyst:
     def __init__(self, api_key: str | None = None, vector_store: VectorStore | None = None):
         if not api_key:
             raise ValueError("An API key is required to initialize the analyst.")
-        genai.configure(api_key=api_key)
+        self.client = genai.Client(api_key=api_key)
         self.model = settings.gemini_model
         self.vector_store = vector_store or VectorStore(api_key=api_key)
 
-    def _generate(self, prompt: str, system_instruction: str = "", temperature: float = 0.2) -> str:
+    def _generate(
+        self,
+        prompt: str,
+        system_instruction: str = "",
+        temperature: float = 0.2,
+        json_mode: bool = False,
+        max_output_tokens: int = 2048,
+    ) -> str:
         """Send a prompt to Gemini and return the text response."""
+        config_kwargs: dict = {
+            "temperature": temperature,
+            "max_output_tokens": max_output_tokens,
+        }
+        if system_instruction:
+            config_kwargs["system_instruction"] = system_instruction
+        if json_mode:
+            config_kwargs["response_mime_type"] = "application/json"
+
         try:
-            model = genai.GenerativeModel(
-                model_name=self.model,
-                system_instruction=system_instruction if system_instruction else None,
-                generation_config=genai.types.GenerationConfig(
-                    temperature=temperature,
-                    max_output_tokens=1500,
-                )
+            response = self.client.models.generate_content(
+                model=self.model,
+                contents=prompt,
+                config=types.GenerateContentConfig(**config_kwargs),
             )
-            response = model.generate_content(prompt)
-            return response.text or ""
         except Exception as exc:
             raise GeminiServiceError(
-                "Gemini could not be reached from this machine. "
-                "Check your network, proxy, firewall, or API access."
+                "Gemini could not complete this request. "
+                f"Check your API key, model access, and network. ({type(exc).__name__}: {exc})"
             ) from exc
+
+        text = _response_text(response)
+        if text:
+            return text
+        raise GeminiServiceError("Gemini returned an empty response. Try rephrasing the question.")
 
     def ask_document(self, question: str, chat_history: list[dict] | None = None) -> dict:
         """Answer a question using retrieved document context."""
@@ -117,7 +247,8 @@ class AIAnalyst:
             "1. Write Python/pandas code to answer the question.\n"
             "2. Store the final answer in a variable called `result`.\n"
             "3. The `result` should be a simple value, Series, or small DataFrame (under 50 rows).\n"
-            "4. Do NOT use print(). Do NOT import pandas (it's already imported as pd).\n"
+            "4. Do NOT use print(). Do NOT import pandas (it's already imported as pd). "
+            "numpy is available as np.\n"
             "5. Do NOT modify the original DataFrame.\n"
             "6. After the code, suggest a chart type if the result is visualizable.\n\n"
             "Respond in this exact JSON format (no markdown fences):\n"
@@ -138,7 +269,13 @@ class AIAnalyst:
         prompt = f"{history_text}QUESTION: {question}"
 
         try:
-            raw = self._generate(prompt, system_instruction=system, temperature=0.1)
+            raw = self._generate(
+                prompt,
+                system_instruction=system,
+                temperature=0.1,
+                json_mode=True,
+                max_output_tokens=4096,
+            )
         except GeminiServiceError as exc:
             return {
                 "answer": str(exc),
@@ -147,49 +284,57 @@ class AIAnalyst:
                 "chart_suggestion": None,
             }
 
-        try:
-            cleaned = raw.strip()
-            if "```json" in cleaned:
-                cleaned = cleaned.split("```json")[1].split("```")[0].strip()
-            elif "```" in cleaned:
-                cleaned = cleaned.split("```")[1].split("```")[0].strip()
+        parsed = parse_model_json(raw)
+        if parsed is None:
+            parsed = _regex_extract(raw)
 
-            parsed = json.loads(cleaned)
-        except (json.JSONDecodeError, IndexError):
+        if not parsed:
             return {
-                "answer": f"I understood your question but had trouble formatting the response. Here's my raw analysis:\n\n{raw}",
+                "answer": (
+                    "I understood your question but had trouble formatting the response. "
+                    f"Here's my raw analysis:\n\n{raw[:1200]}{'...' if len(raw) > 1200 else ''}"
+                ),
                 "code": "",
                 "result": None,
                 "chart_suggestion": None,
             }
 
-        code = parsed.get("code", "")
-        explanation = parsed.get("explanation", "")
-        chart_type = parsed.get("chart_type", "none")
-        chart_config = parsed.get("chart_config", {})
+        code = _normalize_code(parsed.get("code", ""))
+        explanation = str(parsed.get("explanation") or "").strip()
+        chart_type = str(parsed.get("chart_type") or "none").strip().lower()
+        chart_config = parsed.get("chart_config") or {}
+        if not isinstance(chart_config, dict):
+            chart_config = {}
 
-        exec_result = self._safe_execute(code, df)
+        if not code:
+            return {
+                "answer": explanation or "I could not generate analysis code for that question.",
+                "code": "",
+                "result": None,
+                "chart_suggestion": None,
+            }
+
+        exec_result = safe_execute(code, df)
         if exec_result["error"]:
             return {
-                "answer": f"I tried to analyze your data but ran into an error:\n\n`{exec_result['error']}`\n\n{explanation}",
+                "answer": (
+                    "I tried to analyze your data but ran into an error:\n\n"
+                    f"`{exec_result['error']}`\n\n{explanation}"
+                ).strip(),
                 "code": code,
                 "result": None,
                 "chart_suggestion": None,
             }
 
         result = exec_result["result"]
-        formatted_result = self._format_result(result)
+        formatted = format_result(result)
+        answer = f"{explanation}\n\n**Result:**\n{formatted}" if explanation else f"**Result:**\n{formatted}"
 
         return {
-            "answer": f"{explanation}\n\n**Result:**\n{formatted_result}",
+            "answer": answer,
             "code": code,
             "result": result,
-            "chart_suggestion": {
-                "type": chart_type,
-                "config": chart_config,
-            }
-            if chart_type != "none"
-            else None,
+            "chart_suggestion": {"type": chart_type, "config": chart_config} if chart_type != "none" else None,
         }
 
     def ask(
@@ -211,7 +356,7 @@ class AIAnalyst:
                     return self.ask_document(question, chat_history)
 
                 result = self.ask_data(question, df, chat_history)
-                if result["result"] is not None:
+                if result.get("result") is not None:
                     return result
                 return self.ask_document(question, chat_history)
 
@@ -248,8 +393,13 @@ class AIAnalyst:
             result = self._generate(question, system_instruction=system, temperature=0).strip().lower()
         except GeminiServiceError:
             return "hybrid"
-        if result in ("data", "document", "hybrid"):
-            return result
+
+        token = re.split(r"[^a-z]+", result, maxsplit=1)[0] if result else ""
+        if token in ("data", "document", "hybrid"):
+            return token
+        for option in ("hybrid", "document", "data"):
+            if option in result:
+                return option
         return "hybrid"
 
     def _describe_dataframe(self, df: pd.DataFrame) -> str:
@@ -258,7 +408,7 @@ class AIAnalyst:
         lines.append("Columns:")
         for col in df.columns:
             dtype = str(df[col].dtype)
-            non_null = df[col].count()
+            non_null = int(df[col].count())
             sample = str(df[col].dropna().iloc[0]) if non_null > 0 else "N/A"
             if len(sample) > 50:
                 sample = sample[:50] + "..."
@@ -267,23 +417,43 @@ class AIAnalyst:
         lines.append(f"\nFirst 3 rows:\n{df.head(3).to_string()}")
         return "\n".join(lines)
 
-    def _safe_execute(self, code: str, df: pd.DataFrame) -> dict:
-        """Execute AI-generated pandas code safely."""
-        try:
-            local_vars = {"df": df.copy(), "pd": pd}
-            exec(code, {"__builtins__": {}}, local_vars)
-            return {"result": local_vars.get("result"), "error": None}
-        except Exception as e:
-            return {"result": None, "error": f"{type(e).__name__}: {str(e)}"}
 
-    def _format_result(self, result) -> str:
-        """Format execution result for display."""
-        if result is None:
-            return "No result returned."
-        if isinstance(result, pd.DataFrame):
-            if len(result) > 20:
-                return f"{result.head(20).to_markdown(index=False)}\n\n*...showing first 20 of {len(result)} rows*"
-            return result.to_markdown(index=False)
-        if isinstance(result, pd.Series):
-            return result.to_markdown()
-        return str(result)
+def _response_text(response) -> str:
+    """Extract text from a google-genai response without raising on empty/blocked output."""
+    text = getattr(response, "text", None)
+    if text:
+        return text
+    try:
+        candidates = getattr(response, "candidates", None) or []
+        parts = []
+        for candidate in candidates:
+            content = getattr(candidate, "content", None)
+            for part in getattr(content, "parts", None) or []:
+                value = getattr(part, "text", None)
+                if value:
+                    parts.append(value)
+        return "\n".join(parts).strip()
+    except Exception:
+        return ""
+
+
+def _regex_extract(raw: str) -> dict | None:
+    """Last-resort field extraction when the model returns almost-JSON."""
+    explanation_match = re.search(r'"explanation"\s*:\s*"((?:\\.|[^"\\])*)"', raw)
+    code_match = re.search(r'"code"\s*:\s*"((?:\\.|[^"\\])*)"', raw, re.DOTALL)
+    chart_type_match = re.search(r'"chart_type"\s*:\s*"([^"]*)"', raw)
+
+    if not (explanation_match or code_match):
+        return None
+
+    def _unescape(value: str) -> str:
+        return value.encode("utf-8").decode("unicode_escape")
+
+    parsed: dict = {}
+    if explanation_match:
+        parsed["explanation"] = _unescape(explanation_match.group(1))
+    if code_match:
+        parsed["code"] = _unescape(code_match.group(1))
+    if chart_type_match:
+        parsed["chart_type"] = chart_type_match.group(1)
+    return parsed

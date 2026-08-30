@@ -75,6 +75,17 @@ def load_pdf_from_bytes(file_bytes: bytes, filename: str) -> Document:
 
 def load_csv(file_path: str | Path) -> pd.DataFrame:
     """Load a CSV file into a pandas DataFrame."""
+    last_error: Exception | None = None
+    for encoding in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
+        try:
+            return pd.read_csv(file_path, encoding=encoding)
+        except UnicodeDecodeError as exc:
+            last_error = exc
+            continue
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
+    if last_error:
+        raise last_error
     return pd.read_csv(file_path)
 
 
@@ -82,6 +93,17 @@ def load_csv_from_bytes(file_bytes: bytes, filename: str) -> pd.DataFrame:
     """Load CSV from bytes (for Streamlit file uploads)."""
     import io
 
+    last_error: Exception | None = None
+    for encoding in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
+        try:
+            return pd.read_csv(io.BytesIO(file_bytes), encoding=encoding)
+        except UnicodeDecodeError as exc:
+            last_error = exc
+            continue
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
+    if last_error:
+        raise last_error
     return pd.read_csv(io.BytesIO(file_bytes))
 
 
