@@ -6,7 +6,7 @@ Routes questions to the right strategy, generates answers, and suggests charts.
 import json
 
 import pandas as pd
-import google.generativeai as genai
+from google import genai
 
 from src.engine.vector_store import VectorStore
 from src.utils.config import settings
