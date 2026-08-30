@@ -1,0 +1,48 @@
+[project]
+name = "ai-data-analyst"
+version = "0.1.0"
+description = "AI-powered data analyst — upload CSV/PDF, ask questions in plain English, get answers + auto-generated charts"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    # Core
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-dotenv>=1.0",
+
+    # Data
+    "pandas>=2.0",
+    "pypdf>=3.0",
+    "tabulate>=0.9",
+
+    # AI & Vector DB
+    "google-genai>=1.0",
+    "chromadb>=0.4",
+
+    # Dashboard & Visualization
+    "streamlit>=1.28",
+    "plotly>=5.17",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.1",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "I", "UP", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
