@@ -1,12 +1,14 @@
-# AI Data Analyst
-
 <p align="center">
   <img src="src/assets/AI Data Analyst logo.png" alt="AI Data Analyst Logo" width="200"/>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/Gemini%20AI-4285F4?logo=google&logoColor=white" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/ChromaDB-0.4+-20232a?logo=chromadb&logoColor=white" alt="ChromaDB" />
+</p>
 An AI-powered data analytics tool that lets you upload CSV or PDF files and ask questions in plain English. It returns answers, runs data analysis, and generates charts automatically.
-
-Built with Python, Streamlit, Google Gemini, and ChromaDB.
 
 ---
 
@@ -23,19 +25,21 @@ Built with Python, Streamlit, Google Gemini, and ChromaDB.
 ## Project Structure
 
 ```
-src/
-├── app.py                   # Streamlit dashboard (entry point)
-├── assets/                  # Static assets (logo, images)
-├── data/                    # Data storage (ChromaDB, processed files)
-├── engine/
-│   ├── ai_analyst.py           # Core AI engine (Gemini LLM)
-│   ├── doc_processor.py        # PDF/CSV loading and text chunking
-│   └── vector_store.py         # ChromaDB wrapper with Gemini embeddings
-├── viz/
-│   └── chart_generator.py      # Plotly chart generation from AI responses
-└── utils/
-    └── config.py               # Default settings
-```
+AI Data Analyst/
+├── .streamlit/
+│   └── config.toml                # Streamlit app configuration (theme, options)
+├── src/
+│   ├── app.py                     # Main entry point: Streamlit dashboard
+│   ├── assets/                    # Static assets (logo, images, icons)
+│   ├── data/                      # App data storage (ChromaDB, processed files)
+│   ├── engine/
+│   │   ├── ai_analyst.py          # Core AI/data analyst logic (Gemini LLM integration)
+│   │   ├── doc_processor.py       # Document loader and text chunking (CSV/PDF)
+│   │   └── vector_store.py        # ChromaDB/vector database abstraction layer
+│   ├── utils/
+│   │   └── config.py              # Application configuration and defaults
+│   └── viz/
+│       └── chart_generator.py     # Converts analysis results into Plotly charts
 
 ---
 
