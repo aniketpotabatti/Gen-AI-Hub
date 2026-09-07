@@ -1,0 +1,22 @@
+model_name_or_path: TinyLlama/TinyLlama-1.1B-Chat-v1.0
+output_dir: ./merged_model
+max_seq_length: 512
+num_train_epochs: 3
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 4
+learning_rate: 2e-4
+fp16: true
+logging_steps: 10
+save_steps: 500
+eval_steps: 500
+warmup_steps: 100
+lr_scheduler_type: cosine
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+target_modules:
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+optimizer: paged_adamw_32bit
