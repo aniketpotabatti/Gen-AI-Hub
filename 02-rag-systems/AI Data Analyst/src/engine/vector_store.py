@@ -24,19 +24,35 @@ _EMBED_BATCH_SIZE = 100
 class GeminiEmbeddingFunction(EmbeddingFunction):
     """Custom ChromaDB embedding function using Google Gemini."""
 
-    def __init__(self, api_key: str, model: str | None = None):
+    def __init__(self, api_key: str, model: str | None = None, dimension: int | None = None):
         if not api_key:
             raise ValueError("An API key is required to create Gemini embeddings.")
+        self._api_key = api_key
         self.client = genai.Client(api_key=api_key)
         self.model = model or settings.embedding_model
-        self.dimension = settings.embedding_dimension
+        self.dimension = dimension or settings.embedding_dimension
 
-    def name(self) -> str:
+    @staticmethod
+    def name() -> str:
         return "gemini-embedding-001"
 
+    def default_space(self) -> str:
+        return "cosine"
+
+    def get_config(self) -> dict:
+        return {"model": self.model, "dimension": self.dimension}
+
+    @staticmethod
+    def build_from_config(config: dict) -> "GeminiEmbeddingFunction":
+        raise NotImplementedError("GeminiEmbeddingFunction must be constructed with an API key.")
+
     def __call__(self, input: Documents) -> Embeddings:
-        """Embed a list of documents using Gemini."""
-        texts = list(input or [])
+        return self._embed(list(input or []), task_type="RETRIEVAL_DOCUMENT")
+
+    def embed_query(self, input: Documents) -> Embeddings:
+        return self._embed(list(input or []), task_type="RETRIEVAL_QUERY")
+
+    def _embed(self, texts: list[str], task_type: str) -> Embeddings:
         if not texts:
             return []
 
@@ -47,7 +63,7 @@ class GeminiEmbeddingFunction(EmbeddingFunction):
                 model=self.model,
                 contents=batch,
                 config=types.EmbedContentConfig(
-                    task_type="RETRIEVAL_DOCUMENT",
+                    task_type=task_type,
                     output_dimensionality=self.dimension,
                 ),
             )

@@ -75,7 +75,11 @@ def auto_chart(df: pd.DataFrame, title: str = "Data Overview") -> go.Figure | No
         return None
 
     numeric_cols = df.select_dtypes(include="number").columns.tolist()
-    categorical_cols = df.select_dtypes(include=["object", "category"]).columns.tolist()
+    categorical_cols = [
+        col
+        for col in df.columns
+        if col not in numeric_cols and not pd.api.types.is_datetime64_any_dtype(df[col])
+    ]
 
     if not numeric_cols:
         return None
