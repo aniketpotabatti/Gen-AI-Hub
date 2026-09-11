@@ -13,7 +13,11 @@ from pathlib import Path
 import chromadb
 import numpy as np
 from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
-from google.generativeai import genai, types
+try:
+    from google.generativeai import genai, types
+except ModuleNotFoundError:
+    genai = None
+    types = None
 from src.utils.config import settings
 
 _EMBED_BATCH_SIZE = 100

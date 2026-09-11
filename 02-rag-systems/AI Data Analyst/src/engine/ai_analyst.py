@@ -10,7 +10,11 @@ import re
 
 import numpy as np
 import pandas as pd
-from google.generativeai import genai, types
+try:
+    from google.generativeai import genai, types
+except ModuleNotFoundError:
+    genai = None
+    types = None
 from src.engine.vector_store import VectorStore
 from src.utils.config import settings
 
