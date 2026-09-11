@@ -1,7 +1,7 @@
 streamlit>=1.51
 pandas>=2.2
 numpy>=1.26
-google-genai>=1.0
+google-generativeai>=1.0
 chromadb>=0.5
 pypdf>=4.0
 plotly>=5.20

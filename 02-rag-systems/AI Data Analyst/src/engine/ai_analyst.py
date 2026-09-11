@@ -10,9 +10,7 @@ import re
 
 import numpy as np
 import pandas as pd
-from google import genai
-from google.genai import types
-
+from google.generativeai import genai, types
 from src.engine.vector_store import VectorStore
 from src.utils.config import settings
 
