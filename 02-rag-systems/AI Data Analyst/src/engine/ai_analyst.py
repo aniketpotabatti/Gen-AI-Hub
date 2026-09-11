@@ -11,7 +11,8 @@ import re
 import numpy as np
 import pandas as pd
 try:
-    from google.generativeai import genai, types
+    import google.generativeai as genai
+    from google.generativeai import types
 except ModuleNotFoundError:
     genai = None
     types = None

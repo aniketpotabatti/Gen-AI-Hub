@@ -14,7 +14,8 @@ import chromadb
 import numpy as np
 from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 try:
-    from google.generativeai import genai, types
+    import google.generativeai as genai
+    from google.generativeai import types
 except ModuleNotFoundError:
     genai = None
     types = None
