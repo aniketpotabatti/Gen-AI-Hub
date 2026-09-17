@@ -1,0 +1,91 @@
+# Tag taxonomy / allowed values for multimodal product tagging.
+# Used by prompts (to constrain VLM output) and by validators (normalization hints).
+# Lists are lowercase; validators normalize model output to match.
+
+categories:
+  - apparel
+  - footwear
+  - electronics
+  - home & garden
+  - beauty
+  - sports
+  - toys
+  - accessories
+
+subcategories:
+  - sneakers
+  - boots
+  - t-shirt
+  - dress
+  - jacket
+  - smartphone
+  - laptop
+  - chair
+  - lamp
+
+attributes:
+  color:
+    - red
+    - blue
+    - green
+    - black
+    - white
+    - yellow
+    - purple
+    - orange
+    - pink
+    - brown
+    - gray
+    - beige
+    - multicolor
+  material:
+    - cotton
+    - polyester
+    - leather
+    - silk
+    - wool
+    - denim
+    - linen
+    - rubber
+    - plastic
+    - wood
+    - metal
+    - glass
+  pattern:
+    - solid
+    - striped
+    - floral
+    - plaid
+    - polka dot
+    - graphic
+    - geometric
+  style:
+    - casual
+    - formal
+    - sporty
+    - vintage
+    - modern
+    - minimalist
+    - bohemian
+  gender:
+    - men
+    - women
+    - unisex
+    - kids
+  age_group:
+    - infant
+    - youth
+    - adult
+    - senior
+  usage_occasion:
+    - sports
+    - party
+    - work
+    - casual
+    - outdoor
+    - travel
+
+validation_rules:
+  require_category_or_subcategory: true
+  lowercase_string_fields: true
+  unique_list_values: true

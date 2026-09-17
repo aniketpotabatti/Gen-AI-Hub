@@ -1,0 +1,33 @@
+# Default model configuration (placeholders resolved from environment, e.g. ${GEMINI_API_KEY}).
+default_provider: "gemini"
+default_model: "gemini-2.5-flash"
+
+providers:
+  gemini:
+    api_key: "${GEMINI_API_KEY}"
+    model: "gemini-2.5-flash"
+    temperature: 0.2
+    max_output_tokens: 1000
+    top_p: 0.9
+    safety_settings:
+      harassment: BLOCK_MEDIUM_AND_ABOVE
+      hateSpeech: BLOCK_MEDIUM_AND_ABOVE
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: "gpt-4o"
+    temperature: 0.2
+    max_tokens: 1000
+    top_p: 0.9
+    response_format: { "type": "json_object" }
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}"
+    model: "claude-3-5-sonnet-20241022"
+    temperature: 0.2
+    max_tokens: 1000
+    top_p: 0.9
+  local:
+    base_url: "http://localhost:11434"  # Ollama default
+    model: "llava:latest"
+    temperature: 0.2
+    num_predict: 1000
+    top_p: 0.9

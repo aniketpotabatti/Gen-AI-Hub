@@ -1,0 +1,1 @@
+"""Multimodal product tagging package."""

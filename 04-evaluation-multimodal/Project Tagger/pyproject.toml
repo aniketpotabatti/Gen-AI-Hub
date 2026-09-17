@@ -1,0 +1,55 @@
+[project]
+name = "multimodal-product-tagging"
+version = "0.1.0"
+description = "Multimodal product tagging with Vision-Language Foundation Models (Gemini, GPT-4o, Claude, LLaVA) — structured JSON tags from image + description"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    # Core
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "pillow>=10.0",
+
+    # VLM provider SDKs (Phase 2)
+    "google-genai>=1.0",
+    "openai>=1.0",
+    "anthropic>=0.40",
+    "ollama>=0.4",
+
+    # Reliability & batching (Phases 2-3)
+    "tenacity>=8.0",
+    "aiohttp>=3.9",
+
+    # Web app
+    "streamlit>=1.30",
+    "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.1",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["src*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "I", "UP", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+pythonpath = ["."]
+addopts = "-v --tb=short"
