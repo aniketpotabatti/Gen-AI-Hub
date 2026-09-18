@@ -11,9 +11,9 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Iterable, Optional
 
 from src.schemas.product import ProductInput
 from src.schemas.tags import ProductTags
@@ -30,9 +30,9 @@ class TaggingPipeline:
 
     def __init__(
         self,
-        tagger: Optional[BaseTagger] = None,
-        provider: Optional[str] = None,
-        cost_tracker: Optional[CostTracker] = None,
+        tagger: BaseTagger | None = None,
+        provider: str | None = None,
+        cost_tracker: CostTracker | None = None,
         max_concurrency: int = 4,
     ) -> None:
         self.cost_tracker = cost_tracker or CostTracker()
@@ -80,7 +80,7 @@ class TaggingPipeline:
     async def tag_batch(
         self,
         products: Iterable[ProductInput],
-        output_path: Optional[Path] = None,
+        output_path: Path | None = None,
     ) -> list[dict]:
         """Tag many products concurrently; optionally append records as JSONL."""
         items = list(products)
@@ -101,7 +101,7 @@ class TaggingPipeline:
     def tag_batch_sync(
         self,
         products: Iterable[ProductInput],
-        output_path: Optional[Path] = None,
+        output_path: Path | None = None,
     ) -> list[dict]:
         """Sync wrapper around `tag_batch` for CLIs and scripts."""
         return asyncio.run(self.tag_batch(products, output_path))

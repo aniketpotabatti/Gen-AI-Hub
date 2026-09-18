@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 DEFAULT_PROMPTS_DIR = Path(__file__).resolve().parents[2] / "config" / "prompts"
 
@@ -23,7 +23,7 @@ def load_system_prompt(prompts_dir: Path = DEFAULT_PROMPTS_DIR) -> str:
 def render_user_prompt(
     description: str,
     prompts_dir: Path = DEFAULT_PROMPTS_DIR,
-    few_shot_examples: Optional[list[dict[str, Any]]] = None,
+    few_shot_examples: list[dict[str, Any]] | None = None,
     max_examples: int = 3,
 ) -> str:
     """Render the user prompt template with a product description.

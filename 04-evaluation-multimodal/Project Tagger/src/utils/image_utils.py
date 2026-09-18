@@ -4,7 +4,6 @@ import base64
 import binascii
 import io
 from pathlib import Path
-from typing import Optional, Tuple, Union
 
 from PIL import Image
 
@@ -20,14 +19,14 @@ _MIME_BY_SUFFIX = {
 }
 
 
-def guess_mime_type(image_path: Optional[Union[str, Path]]) -> str:
+def guess_mime_type(image_path: str | Path | None) -> str:
     """Guess the MIME type from a file suffix; defaults to JPEG."""
     if image_path is None:
         return "image/jpeg"
     return _MIME_BY_SUFFIX.get(Path(image_path).suffix.lower(), "image/jpeg")
 
 
-def load_image_bytes(product: ProductInput) -> Tuple[bytes, str]:
+def load_image_bytes(product: ProductInput) -> tuple[bytes, str]:
     """Return raw image bytes + MIME type for a product.
 
     Raises:
@@ -85,13 +84,13 @@ def encode_base64(data: bytes) -> str:
     return base64.b64encode(data).decode("ascii")
 
 
-def resolve_image(product: ProductInput, max_dim: int = 1024) -> Tuple[str, str]:
+def resolve_image(product: ProductInput, max_dim: int = 1024) -> tuple[str, str]:
     """Load + resize a product image; return `(base64_string, mime_type)`."""
     data, mime = load_image_bytes(product)
     return encode_base64(resize_image(data, max_dim=max_dim)), mime
 
 
-def resolve_image_bytes(product: ProductInput, max_dim: int = 1024) -> Tuple[bytes, str]:
+def resolve_image_bytes(product: ProductInput, max_dim: int = 1024) -> tuple[bytes, str]:
     """Load + resize a product image; return `(raw_bytes, mime_type)`."""
     data, mime = load_image_bytes(product)
     return resize_image(data, max_dim=max_dim), mime

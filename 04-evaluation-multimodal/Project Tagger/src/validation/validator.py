@@ -6,12 +6,11 @@ need to validate externally produced JSON (e.g. cached or human-annotated).
 """
 
 import json
-from typing import Any, Union
 
 from pydantic import ValidationError
 
 from src.schemas.tags import ProductTags
-from src.tagger.base import extract_json_block
+from src.utils.json_utils import extract_json_block
 
 
 class ValidationResult:
@@ -20,8 +19,8 @@ class ValidationResult:
     def __init__(
         self,
         ok: bool,
-        tags: Union[ProductTags, None] = None,
-        errors: Union[list, None] = None,
+        tags: ProductTags | None = None,
+        errors: list | None = None,
     ) -> None:
         self.ok = ok
         self.tags = tags
@@ -31,14 +30,14 @@ class ValidationResult:
         return self.ok
 
 
-def validate_tags(raw: Union[str, dict]) -> ValidationResult:
+def validate_tags(raw: str | dict) -> ValidationResult:
     """Validate a raw VLM response (JSON string or dict) as `ProductTags`.
 
     Tolerates markdown fences and surrounding commentary via
     `extract_json_block` before parsing.
     """
     try:
-        payload: Any = json.loads(extract_json_block(raw)) if isinstance(raw, str) else raw
+        payload = json.loads(extract_json_block(raw)) if isinstance(raw, str) else raw
         return ValidationResult(ok=True, tags=ProductTags.model_validate(payload))
     except (json.JSONDecodeError, ValidationError, ValueError) as exc:
         if isinstance(exc, ValidationError):

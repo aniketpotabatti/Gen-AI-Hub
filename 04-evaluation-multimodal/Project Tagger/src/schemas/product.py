@@ -1,7 +1,6 @@
 """Product input schema for multimodal tagging."""
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -15,13 +14,13 @@ class ProductInput(BaseModel):
     """
 
     product_id: str = Field(..., description="Unique product identifier")
-    image_path: Optional[Path] = Field(
+    image_path: Path | None = Field(
         None, description="Path to the product image file"
     )
-    image_base64: Optional[str] = Field(
+    image_base64: str | None = Field(
         None, description="Base64-encoded image bytes (alternative to image_path)"
     )
-    description: Optional[str] = Field(
+    description: str | None = Field(
         None, description="Free-text product description"
     )
 

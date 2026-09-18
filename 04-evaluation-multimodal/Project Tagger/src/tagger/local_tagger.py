@@ -5,7 +5,7 @@ when the `ollama` package is unavailable but `vllm_base_url` is configured.
 """
 
 import base64
-from typing import Optional
+import urllib.request
 
 from src.schemas.product import ProductInput
 from src.tagger.base import BaseTagger, timed_call
@@ -16,13 +16,12 @@ class LocalTagger(BaseTagger):
 
     provider = "local"
 
-    def __init__(self, config: Optional[dict] = None, **kwargs) -> None:
+    def __init__(self, config=None, **kwargs) -> None:
         super().__init__(config, **kwargs)
         self._base_url = self.config.get("base_url", "http://localhost:11434")
         self._vllm_url = self.config.get("vllm_base_url")
         try:
             import ollama  # type: ignore
-
             self._ollama = ollama.Client(host=self._base_url)
             self._backend = "ollama"
         except ImportError:
@@ -43,16 +42,12 @@ class LocalTagger(BaseTagger):
         return self._call_vllm(image_b64, mime, prompt)
 
     def _call_ollama(self, image_b64: str, prompt: str) -> tuple[str, dict]:
-        (response, latency) = timed_call(
+        response, latency = timed_call(
             self._ollama.chat,
             model=self.model,
             messages=[
                 {"role": "system", "content": self._system_prompt},
-                {
-                    "role": "user",
-                    "content": prompt,
-                    "images": [image_b64],
-                },
+                {"role": "user", "content": prompt, "images": [image_b64]},
             ],
             options={
                 "temperature": self.temperature,
@@ -62,16 +57,14 @@ class LocalTagger(BaseTagger):
             format="json",
         )
         text = response.get("message", {}).get("content", "")
-        # Ollama rarely reports token counts; estimate ~4 chars/token on output.
         return text, {
-            "input_tokens": 0,
+            "input_tokens": 0,  # Ollama rarely reports token counts
             "output_tokens": max(len(text) // 4, 0),
             "latency_s": round(latency, 3),
         }
 
     def _call_vllm(self, image_b64: str, mime: str, prompt: str) -> tuple[str, dict]:
         import json as _json
-        import urllib.request
 
         payload = _json.dumps(
             {
@@ -81,12 +74,7 @@ class LocalTagger(BaseTagger):
                     {
                         "role": "user",
                         "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:{mime};base64,{image_b64}"
-                                },
-                            },
+                            {"type": "image_url", "image_url": {"url": f"data:{mime};base64,{image_b64}"}},
                             {"type": "text", "text": prompt},
                         ],
                     },
@@ -101,12 +89,12 @@ class LocalTagger(BaseTagger):
             data=payload,
             headers={"Content-Type": "application/json"},
         )
-        (raw, latency) = timed_call(urllib.request.urlopen, request, timeout=300)
+        raw, latency = timed_call(urllib.request.urlopen, request, timeout=300)
         body = _json.loads(raw.read().decode("utf-8"))
-        choice = body["choices"][0]["message"]["content"] or ""
         usage = body.get("usage", {})
-        return choice, {
+        return body["choices"][0]["message"]["content"] or "", {
             "input_tokens": usage.get("prompt_tokens", 0) or 0,
             "output_tokens": usage.get("completion_tokens", 0) or 0,
             "latency_s": round(latency, 3),
         }
+

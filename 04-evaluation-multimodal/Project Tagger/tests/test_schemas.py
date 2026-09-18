@@ -28,3 +28,20 @@ def test_tags_normalization():
     assert tags.category == "apparel"
     assert tags.color == ["red", "blue"]  # lowercased + de-duplicated
     assert tags.brand == "Nike"  # proper noun casing preserved
+
+
+def test_tags_coerces_scalar_color_from_vlm():
+    """Regression: Gemini returned 'Blue' instead of ['Blue'] (list_type error)."""
+    tags = ProductTags(category="apparel", color="Blue")
+    assert tags.color == ["blue"]
+
+
+def test_tags_coerces_comma_separated_color():
+    tags = ProductTags(category="apparel", color="Blue, Black")
+    assert tags.color == ["blue", "black"]
+
+
+def test_tags_coerces_list_to_scalar():
+    tags = ProductTags(category=["Apparel"], subcategory=["T-Shirt"])
+    assert tags.category == "apparel"
+    assert tags.subcategory == "t-shirt"

@@ -8,11 +8,11 @@ Every tagger follows the same contract:
   3. Record token usage + cost via `CostTracker`.
 """
 
-import json
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any
+
 from pydantic import ValidationError
 from tenacity import (
     retry,
@@ -30,10 +30,13 @@ from src.schemas.product import ProductInput
 from src.schemas.tags import ProductTags
 from src.utils.cost_tracker import CostTracker
 from src.utils.image_utils import resolve_image
+from src.utils.json_utils import parse_json_payload
 
 logger = logging.getLogger(__name__)
 
 MAX_VALIDATION_ATTEMPTS = 3
+MAX_TRANSPORT_ATTEMPTS = 3
+API_KEY_SENTINELS = ("your_", "${")
 FORMAT_NUDGE = (
     "\n\nIMPORTANT: Your previous response was not valid JSON matching the "
     "ProductTags schema. Respond with valid JSON only — no markdown fences, "
@@ -52,10 +55,10 @@ class BaseTagger(ABC):
 
     def __init__(
         self,
-        config: Optional[dict] = None,
-        cost_tracker: Optional[CostTracker] = None,
+        config: dict | None = None,
+        cost_tracker: CostTracker | None = None,
         max_image_dim: int = 1024,
-        few_shot_examples: Optional[list[dict[str, Any]]] = None,
+        few_shot_examples: list[dict[str, Any]] | None = None,
         use_few_shot: bool = False,
     ) -> None:
         self.config = config or {}
@@ -71,6 +74,15 @@ class BaseTagger(ABC):
         self.few_shot_examples = list(few_shot_examples or [])
         self.last_usage: dict = {}
 
+    def _require_api_key(self, env_var: str) -> str:
+        """Return a configured API key or raise with an actionable message."""
+        api_key = self.config.get("api_key") or ""
+        if not api_key.strip() or any(s in api_key for s in API_KEY_SENTINELS):
+            raise ValueError(
+                f"Missing {self.provider} API key. Set {env_var} in your environment."
+            )
+        return api_key
+
     # ------------------------------------------------------------------ #
     # Template methods
     # ------------------------------------------------------------------ #
@@ -81,7 +93,7 @@ class BaseTagger(ABC):
             product.description or "",
             few_shot_examples=self.few_shot_examples or None,
         )
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
 
         for attempt in range(1, MAX_VALIDATION_ATTEMPTS + 1):
             prompt = user_prompt + (FORMAT_NUDGE if attempt > 1 else "")
@@ -100,7 +112,7 @@ class BaseTagger(ABC):
             self.last_usage = usage
             self.cost_tracker.record(self.provider, self.model, usage)
             try:
-                return ProductTags.model_validate(_parse_json(raw_text))
+                return ProductTags.model_validate(parse_json_payload(raw_text))
             except (ValidationError, ValueError) as exc:
                 last_error = exc
                 logger.warning(
@@ -113,14 +125,13 @@ class BaseTagger(ABC):
             f"after {MAX_VALIDATION_ATTEMPTS} attempts: {last_error}"
         )
 
-    # ------------------------------------------------------------------ #
-    # Retry wrapper (transport-level: timeouts, rate limits, 5xx).
-    # ------------------------------------------------------------------ #
     def _call_model_with_retry(
         self, product: ProductInput, image_b64: str, mime: str, prompt: str
     ) -> tuple[str, dict]:
+        """Retry transport-level errors (timeouts, rate limits, 5xx) with backoff."""
+
         @retry(
-            stop=stop_after_attempt(3),
+            stop=stop_after_attempt(MAX_TRANSPORT_ATTEMPTS),
             wait=wait_exponential(multiplier=1, min=1, max=10),
             retry=retry_if_exception_type((TimeoutError, ConnectionError)),
             reraise=True,
@@ -139,26 +150,6 @@ class BaseTagger(ABC):
         `usage_dict` uses OpenAI-style keys:
         `{"input_tokens": int, "output_tokens": int, "latency_s": float}`.
         """
-
-
-def extract_json_block(text: str) -> str:
-    """Strip markdown fences / commentary, returning the JSON payload."""
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        lines = cleaned.splitlines()
-        lines = lines[1:]  # drop opening fence (```json or ```)
-        if lines and lines[-1].strip().startswith("```"):
-            lines = lines[:-1]
-        cleaned = "\n".join(lines).strip()
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        return cleaned[start : end + 1]
-    return cleaned
-
-
-def _parse_json(text: str) -> Any:
-    return json.loads(extract_json_block(text))
 
 
 def timed_call(func, *args, **kwargs) -> tuple[Any, float]:

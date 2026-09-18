@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 PRICE_PER_1M_TOKENS: dict[str, dict[str, float]] = {
     "gemini-2.5-flash": {"input": 0.30, "output": 2.50},
     "gpt-4o": {"input": 2.50, "output": 10.00},
-    "gpt-4v": {"input": 10.00, "output": 30.00},
     "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
     "llava:latest": {"input": 0.0, "output": 0.0},
 }

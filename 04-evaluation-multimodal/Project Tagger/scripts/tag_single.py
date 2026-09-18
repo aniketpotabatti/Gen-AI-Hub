@@ -11,9 +11,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _cli_common import (  # noqa: E402
     add_common_args,
     build_pipeline,
-    logger,
     print_cost_summary,
 )
+
 from src.schemas.product import ProductInput  # noqa: E402
 
 

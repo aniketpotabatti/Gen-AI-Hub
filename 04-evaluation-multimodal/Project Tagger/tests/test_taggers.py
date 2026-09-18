@@ -7,9 +7,10 @@ import pytest
 
 from src.pipeline.tagging_pipeline import TaggingPipeline, load_jsonl, save_jsonl
 from src.schemas.product import ProductInput
-from src.tagger.base import BaseTagger, TaggingError, extract_json_block
+from src.tagger.base import BaseTagger, TaggingError
 from src.tagger.factory import available_providers, create_tagger
 from src.utils.cost_tracker import CostTracker, estimate_cost
+from src.utils.json_utils import extract_json_block
 from src.validation.validator import validate_tags
 
 VALID_JSON = '{"category": "apparel", "color": ["red"], "brand": "Nike"}'

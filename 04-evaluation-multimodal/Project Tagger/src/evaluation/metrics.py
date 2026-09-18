@@ -9,7 +9,11 @@ Metrics implemented from the plan's Evaluation Strategy:
   - Cost (mean USD per product, from CostTracker summary)
 """
 
-from typing import Any, Iterable, Optional
+import logging
+from collections.abc import Iterable
+from typing import Any
+
+logger = logging.getLogger(__name__)
 
 LIST_FIELDS = ("color", "material", "style", "usage_occasion")
 SCALAR_FIELDS = (
@@ -42,7 +46,7 @@ def _as_set(value: Any) -> set:
     return {str(value).lower()}
 
 
-def _parent(value: Any, parents: dict) -> Optional[str]:
+def _parent(value: Any, parents: dict) -> str | None:
     if value is None:
         return None
     key = value.lower() if isinstance(value, str) else value
@@ -94,7 +98,7 @@ def hierarchical_accuracy(
     predictions: Iterable[dict],
     ground_truths: Iterable[dict],
     field: str = "subcategory",
-    parents: Optional[dict] = None,
+    parents: dict | None = None,
 ) -> float:
     """Accuracy with partial credit at the taxonomy parent level.
 
@@ -129,11 +133,30 @@ def latency_stats(records: Iterable[dict]) -> dict[str, float]:
     }
 
 
+def align_records(
+    predictions: list[dict], truths: list[dict]
+) -> tuple[list[dict], list[dict]]:
+    """Pair prediction records with ground-truth records for evaluation.
+
+    Aligns by `product_id` when both sides have overlapping ids, else falls
+    back to positional pairing (truncated to the shorter side).
+    """
+    truth_by_id = {r.get("product_id"): r for r in truths}
+    pred_by_id = {r.get("product_id"): r for r in predictions}
+    if truth_by_id and pred_by_id and set(pred_by_id) & set(truth_by_id):
+        common = [pid for pid in pred_by_id if pid in truth_by_id]
+        return [pred_by_id[pid] for pid in common], [truth_by_id[pid] for pid in common]
+    n = min(len(predictions), len(truths))
+    if len(predictions) != len(truths):
+        logger.warning("No product_id overlap; pairing first %d records by order.", n)
+    return predictions[:n], truths[:n]
+
+
 def evaluate(
     predictions: Iterable[dict],
     ground_truths: Iterable[dict],
-    records: Optional[Iterable[dict]] = None,
-    cost_summary: Optional[dict] = None,
+    records: Iterable[dict] | None = None,
+    cost_summary: dict | None = None,
 ) -> dict:
     """Compute the full metric report from the plan's evaluation strategy."""
     preds, truths = list(predictions), list(ground_truths)

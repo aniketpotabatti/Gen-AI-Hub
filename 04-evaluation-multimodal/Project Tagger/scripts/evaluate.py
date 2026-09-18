@@ -1,4 +1,4 @@
-"""CLI: evaluate predicted tags against ground truth (accuracy, consistency)."""
+"""Evaluate predicted tags against ground truth (accuracy, consistency)."""
 
 import argparse
 import json
@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from src.evaluation import evaluate  # noqa: E402
+from src.evaluation import align_records as _align  # noqa: E402
+from src.evaluation import evaluate
 from src.pipeline.tagging_pipeline import load_jsonl  # noqa: E402
 
 logger = logging.getLogger("product_tagger")
@@ -39,21 +39,6 @@ def parse_args(argv=None) -> argparse.Namespace:
         help="Record key holding ground-truth tags (default: 'tags').",
     )
     return parser.parse_args(argv)
-
-
-def _align(predictions: list[dict], truths: list[dict]) -> tuple[list, list]:
-    """Align by product_id when present, else pair by order."""
-    truth_by_id = {r.get("product_id"): r for r in truths}
-    pred_by_id = {r.get("product_id"): r for r in predictions}
-    if truth_by_id and pred_by_id and set(pred_by_id) & set(truth_by_id):
-        common = [pid for pid in pred_by_id if pid in truth_by_id]
-        return [pred_by_id[pid] for pid in common], [truth_by_id[pid] for pid in common]
-    n = min(len(predictions), len(truths))
-    if len(predictions) != len(truths):
-        logger.warning(
-            "No product_id overlap; pairing first %d records by order.", n
-        )
-    return predictions[:n], truths[:n]
 
 
 def main(argv=None) -> int:

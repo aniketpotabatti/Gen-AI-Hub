@@ -1,57 +1,56 @@
 """Product output (tags) schema for multimodal tagging."""
 
-from typing import List, Optional
-
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 _LOWERCASE_FIELDS = ("category", "subcategory", "pattern", "gender", "age_group", "size")
+_LIST_FIELDS = ("color", "material", "style", "usage_occasion")
 
 
 class ProductTags(BaseModel):
     """Structured tags produced by a VLM for one product."""
 
     # Core identification
-    category: Optional[str] = Field(
+    category: str | None = Field(
         None, description="Primary product category (e.g. 'shoes', 'dress')"
     )
-    subcategory: Optional[str] = Field(
+    subcategory: str | None = Field(
         None, description="Secondary classification (e.g. 'sneakers', 'cocktail dress')"
     )
-    brand: Optional[str] = Field(None, description="Brand name if visible or mentioned")
+    brand: str | None = Field(None, description="Brand name if visible or mentioned")
 
     # Visual attributes
-    color: Optional[List[str]] = Field(
+    color: list[str] | None = Field(
         None, description="Observed colors (e.g. ['red', 'black'])"
     )
-    material: Optional[List[str]] = Field(
+    material: list[str] | None = Field(
         None, description="Materials (e.g. ['cotton', 'leather'])"
     )
-    pattern: Optional[str] = Field(
+    pattern: str | None = Field(
         None, description="Pattern (e.g. 'striped', 'floral', 'solid')"
     )
-    style: Optional[List[str]] = Field(
+    style: list[str] | None = Field(
         None, description="Style tags (e.g. ['casual', 'formal', 'vintage'])"
     )
 
     # Target demographics
-    gender: Optional[str] = Field(
+    gender: str | None = Field(
         None, description="Intended gender (e.g. 'men', 'women', 'unisex')"
     )
-    age_group: Optional[str] = Field(
+    age_group: str | None = Field(
         None, description="Age group (e.g. 'adult', 'youth', 'senior')"
     )
 
     # Usage & properties
-    usage_occasion: Optional[List[str]] = Field(
+    usage_occasion: list[str] | None = Field(
         None, description="Occasions (e.g. ['sports', 'party', 'work'])"
     )
-    size: Optional[str] = Field(None, description="Size if visible (e.g. 'M', '42')")
-    is_waterproof: Optional[bool] = Field(
+    size: str | None = Field(None, description="Size if visible (e.g. 'M', '42')")
+    is_waterproof: bool | None = Field(
         None, description="Whether the product is waterproof"
     )
 
     # Custom attributes (domain-specific extensions)
-    custom_attributes: Optional[dict] = Field(
+    custom_attributes: dict | None = Field(
         None, description="Additional domain-specific attributes"
     )
 
@@ -62,6 +61,31 @@ class ProductTags(BaseModel):
                 "At least one of 'category' or 'subcategory' must be present."
             )
         return self
+
+    @field_validator(*_LIST_FIELDS, mode="before")
+    @classmethod
+    def _coerce_to_list(cls, value):
+        """Tolerate VLMs returning a scalar where a list is expected.
+
+        `"Blue"` -> `["Blue"]`; `"Blue, Black"` -> `["Blue", "Black"]`.
+        Without this, a single-string response fails validation on all retries.
+        """
+        if value is None or isinstance(value, list):
+            return value
+        if isinstance(value, str):
+            parts = [part.strip() for part in value.split(",") if part.strip()]
+            return parts or None
+        if isinstance(value, (tuple, set)):
+            return list(value)
+        return [value]
+
+    @field_validator(*_LOWERCASE_FIELDS, "brand", mode="before")
+    @classmethod
+    def _coerce_to_scalar(cls, value):
+        """Tolerate VLMs returning a one-element list where a scalar is expected."""
+        if isinstance(value, list):
+            return value[0] if value else None
+        return value
 
     @field_validator(*_LOWERCASE_FIELDS)
     @classmethod

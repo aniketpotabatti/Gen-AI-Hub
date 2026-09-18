@@ -2,6 +2,7 @@
 
 from src.evaluation.metrics import (
     ALL_TAG_FIELDS,
+    align_records,
     attribute_scores,
     evaluate,
     exact_match_ratio,
@@ -11,6 +12,7 @@ from src.evaluation.metrics import (
 
 __all__ = [
     "ALL_TAG_FIELDS",
+    "align_records",
     "attribute_scores",
     "evaluate",
     "exact_match_ratio",

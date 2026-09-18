@@ -4,7 +4,7 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -45,18 +45,18 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
 
 def build_pipeline(args: argparse.Namespace) -> TaggingPipeline:
     """Build a TaggingPipeline from parsed CLI args."""
+    from src.prompts.loader import load_few_shot_examples
     from src.tagger.factory import create_tagger
 
-    tagger = create_tagger(provider=args.provider, model=args.model)
-    tagger.few_shot_examples = []  # reset; enabled explicitly below
-    if args.few_shot:
-        from src.prompts.loader import load_few_shot_examples
-
-        tagger.few_shot_examples = load_few_shot_examples()
+    tagger = create_tagger(
+        provider=args.provider,
+        model=args.model,
+        few_shot_examples=load_few_shot_examples() if args.few_shot else None,
+    )
     return TaggingPipeline(tagger=tagger, max_concurrency=args.max_concurrency)
 
 
-def product_from_row(row: dict[str, Any], default_dir: Optional[Path] = None) -> ProductInput:
+def product_from_row(row: dict[str, Any], default_dir: Path | None = None) -> ProductInput:
     """Build a ProductInput from a CSV/JSONL row.
 
     Accepted keys: product_id (or id), image (or image_path), description.
@@ -64,7 +64,7 @@ def product_from_row(row: dict[str, Any], default_dir: Optional[Path] = None) ->
     """
     product_id = str(row.get("product_id", row.get("id", "")) or "")
     image_value = row.get("image", row.get("image_path", ""))
-    image_path: Optional[Path] = None
+    image_path: Path | None = None
     if image_value:
         candidate = Path(str(image_value))
         if not candidate.is_absolute() and default_dir is not None:

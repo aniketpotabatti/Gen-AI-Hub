@@ -14,9 +14,9 @@ from src.tagger.base import BaseTagger
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
+import evaluate as evaluate_cli  # noqa: E402
 import tag_batch  # noqa: E402
 import tag_single  # noqa: E402
-import evaluate as evaluate_cli  # noqa: E402
 
 
 class CliStubTagger(BaseTagger):

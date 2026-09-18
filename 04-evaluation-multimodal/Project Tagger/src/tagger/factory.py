@@ -1,13 +1,9 @@
-"""Provider-agnostic factory for instantiating taggers from `models.yaml`."""
-
-from typing import Optional
+﻿"""Provider-agnostic factory for instantiating taggers from `models.yaml`."""
 
 from src.config import load_models_config
-from src.tagger.anthropic_tagger import AnthropicTagger
 from src.tagger.base import BaseTagger
-from src.tagger.gemini_tagger import GeminiTagger
+from src.tagger.cloud_taggers import AnthropicTagger, GeminiTagger, OpenAITagger
 from src.tagger.local_tagger import LocalTagger
-from src.tagger.openai_tagger import OpenAITagger
 from src.utils.cost_tracker import CostTracker
 
 _TAGGERS: dict[str, type[BaseTagger]] = {
@@ -24,9 +20,9 @@ def available_providers() -> list[str]:
 
 
 def create_tagger(
-    provider: Optional[str] = None,
-    model: Optional[str] = None,
-    cost_tracker: Optional[CostTracker] = None,
+    provider: str | None = None,
+    model: str | None = None,
+    cost_tracker: CostTracker | None = None,
     **overrides,
 ) -> BaseTagger:
     """Instantiate a tagger by provider name.
