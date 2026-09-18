@@ -1,84 +1,207 @@
-# Multimodal Product Tagging
+# Multimodal Product Tagger
 
-Automatically generate structured product tags from **product images + descriptions** using Vision-Language Foundation Models (VLMs) — Gemini 2.5 Flash, GPT-4o, Claude 3.5 Sonnet, or local LLaVA/Qwen2-VL via Ollama/vLLM. Outputs validated JSON conforming to a Pydantic `ProductTags` schema.
+Generate structured product tags from an image and text description using Vision-Language Models (VLMs). Switch providers with a config change — Gemini, GPT-4o, Claude, or local LLaVA via Ollama.
 
-## Quickstart
+## Features
+
+- **Provider-agnostic** — Gemini, OpenAI, Anthropic, and local Ollama (LLaVA) through one pipeline
+- **Structured JSON output** — validated against a Pydantic schema (category, color, material, style, and more)
+- **Robust parsing** — defensive JSON extraction, validation retries, and exponential backoff on transport errors
+- **Batch tagging** — concurrent processing with configurable parallelism and JSONL output
+- **Cost tracking** — per-request token usage and estimated USD cost
+- **Evaluation** — compare predictions to ground truth (exact match, macro F1, hierarchical accuracy)
+- **Streamlit UI** — single-product, batch, and evaluation tabs in the browser
+- **Few-shot support** — optional examples from `config/prompts/few_shot_examples.json`
+
+## Requirements
+
+- Python 3.10–3.12
+- API key for cloud providers (Gemini, OpenAI, or Anthropic), or [Ollama](https://ollama.com/) for local tagging
+
+## Installation
 
 ```bash
-# 1. Install (from this folder)
+git clone https://github.com/your-org/gen-ai-hub.git
+cd "04-evaluation-multimodal/Project Tagger"
+
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
 pip install -e ".[dev]"
-
-# 2. Configure credentials
-cp .env.example .env   # then fill in GEMINI_API_KEY / OPENAI_API_KEY / ANTHROPIC_API_KEY
-
-# 3. Tag a single product
-python scripts/tag_single.py --image tests/fixtures/sample_image.jpg \
-    --description "Red cotton casual t-shirt for men" --provider gemini
-
-# 4. Batch tag from CSV/JSONL -> JSONL
-python scripts/tag_batch.py --input data/input/products.csv --output data/output/tags.jsonl
-
-# 5. Evaluate predictions vs ground truth
-python scripts/evaluate.py --predictions data/output/tags.jsonl \
-    --ground-truth data/input/ground_truth.jsonl --output data/output/report.json
-
-# 6. Run tests
-pytest
 ```
 
-### Web app (Streamlit)
+## Configuration
+
+Set API keys as environment variables (or in a `.env` file at the project root):
+
+```bash
+GEMINI_API_KEY=your-key
+OPENAI_API_KEY=your-key
+ANTHROPIC_API_KEY=your-key
+```
+
+Provider defaults live in `config/models.yaml`:
+
+```yaml
+default_provider: gemini
+default_model: gemini-2.5-flash
+
+providers:
+  gemini:
+    api_key: "${GEMINI_API_KEY}"
+    model: gemini-2.5-flash
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    model: gpt-4o
+  anthropic:
+    api_key: "${ANTHROPIC_API_KEY}"
+    model: claude-3-5-sonnet-20241022
+  local:
+    base_url: http://localhost:11434
+    model: llava:latest
+```
+
+The tag taxonomy and allowed values are defined in `config/tags_schema.yaml`. Prompt templates are in `config/prompts/`.
+
+## Usage
+
+### Streamlit app
 
 ```bash
 streamlit run app.py
 ```
 
-Three tabs: **Tag Single** (upload image + description → tags), **Batch Tag**
-(upload CSV/JSONL → results table + JSONL download), **Evaluate** (predictions
-vs ground-truth JSONL → exact-match, macro F1, per-attribute chart). Provider,
-model override, few-shot, and concurrency are set in the sidebar. Live tagging
-needs an API key (`.env`); the Evaluate tab works fully offline via the
-"Use sample ground truth" button.
+Upload an image, enter a description, pick a provider, and download validated JSON tags. The app also supports batch CSV/JSONL upload and evaluation against ground truth.
 
-### Batch input formats
+### CLI
 
-CSV (`--input products.csv`):
-```csv
-product_id,image,description
-p001,images/shirt.jpg,Red cotton casual t-shirt for men
-```
-
-JSONL (`--input products.jsonl`, one object per line):
-```json
-{"product_id": "p001", "image": "images/shirt.jpg", "description": "Red cotton t-shirt"}
-```
-
-Image paths may be absolute or relative to the input file. `image_base64` is accepted as an alternative to `image`/`image_path`.
-
-### Few-shot prompting
+**Tag a single product:**
 
 ```bash
-python scripts/tag_single.py --image img.jpg --description "..." --few-shot
+python scripts/tag_single.py \
+  --image tests/fixtures/sample_image.jpg \
+  --description "Red cotton casual t-shirt for men" \
+  --provider gemini
 ```
 
-Appends up to 3 demonstrations from `config/prompts/few_shot_examples.json` (edit that file to add your own domain examples).
+**Batch tag from CSV or JSONL:**
 
-## Project layout
-
-```
-config/            models.yaml, tags_schema.yaml, prompts/
-src/
-  tagger/          BaseTagger + gemini/openai/anthropic/local + factory
-  schemas/         ProductInput / ProductTags (Pydantic)
-  prompts/         prompt loader (incl. few-shot support)
-  validation/      JSON schema validation
-  pipeline/        TaggingPipeline (tag -> validate -> save JSONL)
-  evaluation/      exact-match, attribute F1, hierarchical accuracy, latency, cost
-  utils/           image handling, cost tracking
-scripts/           tag_single.py, tag_batch.py, evaluate.py
-tests/             mock-based unit tests + fixtures
-docs/              architecture.md, prompt_design.md, model_comparison.md
-notebooks/         01_explore_models, 02_prompt_engineering, 03_evaluation
-data/input|output  sample inputs (git-ignored outputs)
+```bash
+python scripts/tag_batch.py \
+  --input data/input/sample_products.csv \
+  --output data/output/tags.jsonl \
+  --provider openai \
+  --max-concurrency 4
 ```
 
-See `plan.md` for the full design, and `docs/` for architecture, prompt-design, and model-comparison notes.
+CSV columns: `product_id`, `image`, `description`. JSONL rows may also include `image_base64`.
+
+**Evaluate predictions:**
+
+```bash
+python scripts/evaluate.py \
+  --predictions data/output/tags.jsonl \
+  --ground-truth data/input/sample_ground_truth.jsonl \
+  --output data/output/report.json
+```
+
+Common flags for tagging scripts: `--provider`, `--model`, `--few-shot`, `--max-concurrency`, `--log-level`.
+
+### Python API
+
+```python
+from pathlib import Path
+
+from src.pipeline.tagging_pipeline import TaggingPipeline
+from src.schemas.product import ProductInput
+
+pipeline = TaggingPipeline(provider="gemini")
+
+product = ProductInput(
+    product_id="product-001",
+    image_path=Path("tests/fixtures/sample_image.jpg"),
+    description="Red cotton casual t-shirt for men",
+)
+
+record = pipeline.tag_one(product)
+print(record["tags"])
+```
+
+## Output schema
+
+Each tagged product returns a record with `product_id`, `tags`, `error`, `usage`, and `latency_s`. Tags follow the `ProductTags` schema:
+
+| Field | Type | Example |
+|-------|------|---------|
+| `category` | string | `apparel` |
+| `subcategory` | string | `t-shirt` |
+| `brand` | string | `Nike` |
+| `color` | list | `["red"]` |
+| `material` | list | `["cotton"]` |
+| `pattern` | string | `solid` |
+| `style` | list | `["casual"]` |
+| `gender` | string | `men` |
+| `age_group` | string | `adult` |
+| `usage_occasion` | list | `["casual"]` |
+| `size` | string | `M` |
+| `is_waterproof` | bool | `false` |
+
+## Providers
+
+| Provider | Class | Notes |
+|----------|-------|-------|
+| `gemini` | `GeminiTagger` | Google GenAI SDK |
+| `openai` | `OpenAITagger` | JSON response format |
+| `anthropic` | `AnthropicTagger` | Claude vision models |
+| `local` | `LocalTagger` | Ollama + LLaVA, no API key |
+
+To add a provider: subclass `BaseTagger` in `src/tagger/`, implement `_call_model()`, and register it in `src/tagger/factory.py`.
+
+## Project structure
+
+```
+├── app.py                      # Streamlit web UI
+├── config/
+│   ├── models.yaml             # Provider and model settings
+│   ├── tags_schema.yaml        # Tag taxonomy
+│   └── prompts/                # System, user, and few-shot prompts
+├── scripts/
+│   ├── tag_single.py           # Single-product CLI
+│   ├── tag_batch.py            # Batch tagging CLI
+│   └── evaluate.py             # Evaluation CLI
+├── src/
+│   ├── tagger/                 # BaseTagger + provider implementations
+│   ├── pipeline/               # TaggingPipeline orchestration
+│   ├── schemas/                # ProductInput and ProductTags models
+│   ├── prompts/                # Prompt loading and rendering
+│   ├── validation/             # Tag validation helpers
+│   ├── evaluation/             # Metrics (F1, exact match, etc.)
+│   └── utils/                  # JSON, image, and cost utilities
+├── tests/                      # Unit and integration tests
+└── data/                       # Sample inputs and outputs
+```
+
+## Development
+
+```bash
+# Run tests
+python -m pytest
+
+# Run tests with coverage
+python -m pytest --cov=src --cov-report=term-missing
+
+# Lint
+ruff check .
+
+# Auto-fix lint issues
+ruff check --fix .
+```
+
+See `docs/architecture.md` for a deeper overview of the data flow and design decisions.
+
+## License
+
+MIT — see the [Gen-AI-Hub](https://github.com/aniketpotabatti/gen-ai-hub) repository LICENSE.
