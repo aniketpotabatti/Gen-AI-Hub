@@ -193,4 +193,4 @@ Issues and pull requests are welcome. New provider adapters should preserve the 
 
 ## License
 
-This project is currently unlicensed. Add a license before distributing or accepting external contributions.
+MIT — see the [Gen-AI-Hub](https://github.com/aniketpotabatti/gen-ai-hub) repository LICENSE.
