@@ -1,0 +1,28 @@
+app:
+  name: SemanticSearchX
+  version: 1.0.0
+  environment: development
+  debug: false
+  host: "0.0.0.0"
+  port: 8000
+
+vector_store:
+  backend: faiss  # faiss | qdrant
+  collection_name: semantic_chunks
+  qdrant_location: ":memory:"
+  qdrant_host: null
+  qdrant_port: 6333
+  embedding_dim: 384
+
+cache:
+  enabled: true
+  redis_url: null  # e.g., "redis://localhost:6379/0"
+  ttl_seconds: 3600
+  max_memory_items: 1000
+
+observability:
+  enable_metrics: true
+  enable_tracing: true
+  service_name: semantic-search-x
+  log_level: INFO
+  structured_json: false
