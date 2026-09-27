@@ -1,3 +1,4 @@
+import hashlib
 import os
 from typing import List, Dict, Any
 from pathlib import Path
@@ -41,18 +42,33 @@ def load_document(file_path: str) -> str:
     else:
         raise ValueError(f"Unsupported file extension: {ext}")
 
+def file_hash(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
+
 def ingest_directory(directory_path: str, extensions: List[str] = None) -> List[Document]:
     if extensions is None:
         extensions = ['.txt', '.md', '.pdf']
     documents = []
     for root, _, files in os.walk(directory_path):
-        for file in files:
+        for file in sorted(files):
             ext = os.path.splitext(file)[1].lower()
             if ext in extensions:
                 file_path = os.path.join(root, file)
                 try:
                     content = load_document(file_path)
-                    doc = Document(content=content, metadata={"source": file_path, "filename": file})
+                    if not content or not content.strip():
+                        print(f"Skipping empty document: {file_path}")
+                        continue
+                    doc = Document(
+                        content=content,
+                        metadata={
+                            "source": file_path,
+                            "filename": file,
+                            "content_hash": file_hash(content),
+                            "char_count": len(content),
+                        },
+                    )
+                    doc.id = f"{file}_{doc.metadata['content_hash']}"
                     documents.append(doc)
                 except Exception as e:
                     print(f"Failed to load {file_path}: {e}")
