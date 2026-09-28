@@ -1,13 +1,8 @@
-"""Hybrid retrieval: dense + BM25 + exact-match fused with RRF.
-
-Chunk identity is the shared key: dense ids map to chunk_id via
-VectorStore metadata, BM25/exact indices carry the same chunk_id
-in their metadata. RRF fuses ranked lists without score calibration.
-"""
+# Chunk identity is keyed by chunk_id everywhere: VectorStore resolves dense ids
+# through its metadata, BM25/exact indices carry the same chunk_id in theirs.
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-
 
 def reciprocal_rank_fusion(
     ranked_lists: List[List[int]], k: int = 60
@@ -31,8 +26,6 @@ class HybridRetriever:
         self.weights = weights or {"dense": 1.0, "bm25": 1.0, "exact": 1.0}
         self.rrf_k = rrf_k
         self.reranker = reranker
-        # dense position -> chunk_id lookup mirrors VectorStore order.
-        self._dense_pos_to_chunk: List[str] = []
 
     def _dense_chunk_of(self, dense_id: int) -> Optional[str]:
         meta = self.vector_store.id_to_metadata.get(int(dense_id), {})
@@ -100,7 +93,7 @@ class HybridRetriever:
         chunk_best: Dict[str, Dict[str, Any]] = {}
         for name, (ids, scores, metas) in per_strategy.items():
             ranked: List[str] = []
-            for pos, (i, s, m) in enumerate(zip(ids, scores, metas)):
+            for i, s, m in zip(ids, scores, metas):
                 if name == "dense":
                     cid = self._dense_chunk_of(i)
                 else:

@@ -2,7 +2,6 @@
 from contextlib import asynccontextmanager
 import time
 from typing import Any, Dict, List, Optional
-import os
 
 from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -228,7 +227,7 @@ def search(request: SearchRequest):
     except Exception as e:
         SEARCH_REQUEST_TOTAL.labels(status="error", strategy="unknown", cache_hit="false").inc()
         logger.error("Retrieval error for query %r: %s", request.query, e, exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     raw_results = search_res.get("results", [])
     route = search_res.get("route", {})
@@ -290,7 +289,7 @@ def index_documents(request: IndexRequest):
         indexed = state.hybrid.index_chunks(chunks, metadatas, embeddings)
     except Exception as e:
         logger.error("Indexing failed: %s", e, exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     total = len(state.vector_store)
     INDEXED_CHUNKS_TOTAL.set(total)
@@ -382,11 +381,11 @@ def run_benchmark_arena(request: ArenaRequest):
         )
     except ValueError as e:
         ARENA_RUNS_TOTAL.labels(status="invalid").inc()
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         ARENA_RUNS_TOTAL.labels(status="error").inc()
         logger.error("Benchmark arena failed: %s", e, exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     ARENA_RUNS_TOTAL.labels(status="success").inc()
     _record_arena_metrics(report)
@@ -437,7 +436,7 @@ def benchmark_dashboard(k: int = 5, limit: int = 10, candidate_k: int = 20):
     except Exception as e:
         ARENA_RUNS_TOTAL.labels(status="error").inc()
         logger.error("Benchmark dashboard failed: %s", e, exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
     ARENA_RUNS_TOTAL.labels(status="success").inc()
     _record_arena_metrics(report)
