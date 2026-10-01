@@ -46,3 +46,8 @@ opentelemetry-sdk>=1.20.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
 httpx>=0.27.0
+
+# --- Interactive dashboard (Streamlit UI) ---
+# Not installed here on purpose: the UI runs as a separate process against the
+# REST API and needs a Starlette newer than fastapi 0.104 permits. Install it in
+# its own virtual environment from dashboard/requirements.txt.
