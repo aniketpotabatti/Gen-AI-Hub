@@ -1,0 +1,15 @@
+# SemanticSearchX interactive dashboard (Streamlit UI) - optional extras.
+#
+# The dashboard is a separate process that talks to the FastAPI backend over
+# HTTP, so it needs neither the retrieval core (Torch/FAISS/Qdrant/Redis) nor a
+# specific FastAPI/Starlette pair. Install it in its own virtual environment to
+# avoid clashing with the API's pinned web stack:
+#
+#   python -m venv .venv-dashboard
+#   .venv-dashboard\Scripts\activate        # Windows
+#   pip install -r dashboard/requirements.txt
+#   streamlit run dashboard/streamlit_app.py
+streamlit>=1.57
+httpx>=0.27
+pandas>=2.2
+altair>=5.0

@@ -109,3 +109,20 @@ class ArenaResponse(BaseModel):
     winners: Dict[str, Any]
     queries: List[Dict[str, Any]]
     per_query: Optional[Dict[str, Any]] = None
+
+
+class CorpusChunk(BaseModel):
+    """An indexed chunk as returned by the corpus explorer endpoint."""
+
+    chunk_id: str
+    text: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class CorpusResponse(BaseModel):
+    """A paginated page of indexed chunks."""
+
+    total: int
+    offset: int
+    limit: int
+    chunks: List[CorpusChunk]
