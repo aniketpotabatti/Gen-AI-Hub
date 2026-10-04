@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Retrieval Benchmark Arena</title>
+<style>
+:root{--bg:#0f1420;--panel:#161d2d;--line:#26304a;--ink:#e8edf7;--muted:#95a3c4;
+--good:#33d69f;--warn:#ffb454;--bad:#ff6b6b;--accent:#5b8cff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+font:14px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;padding:28px}
+h1{margin:0 0 4px;font-size:24px}
+h2{margin:28px 0 10px;font-size:16px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.sub{color:var(--muted);margin-bottom:18px}
+.cards{display:flex;flex-wrap:wrap;gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+padding:12px 16px;min-width:190px}
+.card .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.card .v{font-size:18px;font-weight:600;margin-top:4px}
+table{width:100%;border-collapse:collapse;background:var(--panel);
+border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}
+th{background:#1b2437;color:var(--muted);font-weight:600;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:9px;border-radius:5px;background:var(--accent);min-width:2px}
+.barcell{width:190px}
+.hit{color:var(--good);font-weight:600}
+.miss{color:var(--bad)}
+code{background:#1b2437;padding:1px 5px;border-radius:4px;color:#cfe0ff}
+.foot{color:var(--muted);margin-top:26px;font-size:12px}
+</style>
+</head>
+<body>
+<h1>Retrieval Benchmark Arena</h1>
+<div class='sub'>Generated 2026-09-30T08:01:38+00:00 &middot; 14 labeled queries &middot; 6 indexed chunks &middot; K=3 &middot; primary metric <code>ndcg@3</code></div>
+<div class='cards'>
+<div class='card'><div class='k'>Best quality (ndcg@3)</div><div class='v'>Hybrid + Reranker</div></div>
+<div class='card'><div class='k'>Lowest mean latency</div><div class='v'>BM25</div></div>
+<div class='card'><div class='k'>Highest throughput</div><div class='v'>BM25</div></div>
+<div class='card'><div class='k'>Lowest estimated cost</div><div class='v'>BM25</div></div>
+</div>
+<h2>Leaderboard</h2>
+<table><thead><tr>
+<th class='num'>#</th><th>Pipeline</th>
+<th class='num'>ndcg@3</th><th>Quality</th>
+<th class='num'>MRR</th><th>MRR</th>
+<th class='num'>Recall</th><th class='num'>Hit rate</th>
+<th class='num'>Mean ms</th><th class='num'>QPS</th>
+<th class='num'>Cost USD</th><th class='num'>Rerank pairs</th>
+</tr></thead><tbody>
+<tr>
+<td class='num'>1</td>
+<td>Hybrid + Reranker</td>
+<td class='num'>0.483</td>
+<td class="barcell"><div class="bar" style="width:100.0%;max-width:190px"></div></td>
+<td class='num'>0.452</td>
+<td class="barcell"><div class="bar" style="width:100.0%;max-width:190px"></div></td>
+<td class='num'>0.571</td>
+<td class='num'>0.571</td>
+<td class='num'>0.41</td>
+<td class='num'>2414.8</td>
+<td class='num'>0.02268</td>
+<td class='num'>84</td>
+</tr>
+<tr>
+<td class='num'>2</td>
+<td>Adaptive + Reranker</td>
+<td class='num'>0.483</td>
+<td class="barcell"><div class="bar" style="width:100.0%;max-width:190px"></div></td>
+<td class='num'>0.452</td>
+<td class="barcell"><div class="bar" style="width:100.0%;max-width:190px"></div></td>
+<td class='num'>0.571</td>
+<td class='num'>0.571</td>
+<td class='num'>0.70</td>
+<td class='num'>1420.5</td>
+<td class='num'>0.02268</td>
+<td class='num'>84</td>
+</tr>
+<tr>
+<td class='num'>3</td>
+<td>Adaptive</td>
+<td class='num'>0.457</td>
+<td class="barcell"><div class="bar" style="width:94.5%;max-width:190px"></div></td>
+<td class='num'>0.417</td>
+<td class="barcell"><div class="bar" style="width:92.1%;max-width:190px"></div></td>
+<td class='num'>0.571</td>
+<td class='num'>0.571</td>
+<td class='num'>0.60</td>
+<td class='num'>1654.4</td>
+<td class='num'>0.00000</td>
+<td class='num'>0</td>
+</tr>
+<tr>
+<td class='num'>4</td>
+<td>Hybrid</td>
+<td class='num'>0.440</td>
+<td class="barcell"><div class="bar" style="width:91.0%;max-width:190px"></div></td>
+<td class='num'>0.393</td>
+<td class="barcell"><div class="bar" style="width:86.8%;max-width:190px"></div></td>
+<td class='num'>0.571</td>
+<td class='num'>0.571</td>
+<td class='num'>0.36</td>
+<td class='num'>2748.2</td>
+<td class='num'>0.00000</td>
+<td class='num'>0</td>
+</tr>
+<tr>
+<td class='num'>5</td>
+<td>BM25</td>
+<td class='num'>0.438</td>
+<td class="barcell"><div class="bar" style="width:90.7%;max-width:190px"></div></td>
+<td class='num'>0.417</td>
+<td class="barcell"><div class="bar" style="width:92.1%;max-width:190px"></div></td>
+<td class='num'>0.500</td>
+<td class='num'>0.500</td>
+<td class='num'>0.17</td>
+<td class='num'>5959.5</td>
+<td class='num'>0.00000</td>
+<td class='num'>0</td>
+</tr>
+<tr>
+<td class='num'>6</td>
+<td>Dense</td>
+<td class='num'>0.126</td>
+<td class="barcell"><div class="bar" style="width:26.0%;max-width:190px"></div></td>
+<td class='num'>0.095</td>
+<td class="barcell"><div class="bar" style="width:21.0%;max-width:190px"></div></td>
+<td class='num'>0.214</td>
+<td class='num'>0.214</td>
+<td class='num'>0.23</td>
+<td class='num'>4304.2</td>
+<td class='num'>0.00000</td>
+<td class='num'>0</td>
+</tr>
+</tbody></table>
+<h2>Quality detail</h2>
+<table><thead><tr><th>Pipeline</th>
+<th class='num'>R@1</th><th class='num'>P@1</th><th class='num'>nDCG@1</th>
+<th class='num'>R@3</th><th class='num'>P@3</th><th class='num'>nDCG@3</th>
+<th class='num'>MRR</th><th class='num'>CtxPrec</th></tr></thead><tbody>
+<tr><td>Hybrid + Reranker</td>
+<td class='num'>0.357</td>
+<td class='num'>0.357</td>
+<td class='num'>0.357</td>
+<td class='num'>0.571</td>
+<td class='num'>0.191</td>
+<td class='num'>0.483</td>
+<td class='num'>0.452</td>
+<td class='num'>0.452</td></tr>
+<tr><td>Adaptive + Reranker</td>
+<td class='num'>0.357</td>
+<td class='num'>0.357</td>
+<td class='num'>0.357</td>
+<td class='num'>0.571</td>
+<td class='num'>0.191</td>
+<td class='num'>0.483</td>
+<td class='num'>0.452</td>
+<td class='num'>0.452</td></tr>
+<tr><td>Adaptive</td>
+<td class='num'>0.286</td>
+<td class='num'>0.286</td>
+<td class='num'>0.286</td>
+<td class='num'>0.571</td>
+<td class='num'>0.191</td>
+<td class='num'>0.457</td>
+<td class='num'>0.417</td>
+<td class='num'>0.417</td></tr>
+<tr><td>Hybrid</td>
+<td class='num'>0.214</td>
+<td class='num'>0.214</td>
+<td class='num'>0.214</td>
+<td class='num'>0.571</td>
+<td class='num'>0.191</td>
+<td class='num'>0.440</td>
+<td class='num'>0.393</td>
+<td class='num'>0.393</td></tr>
+<tr><td>BM25</td>
+<td class='num'>0.357</td>
+<td class='num'>0.357</td>
+<td class='num'>0.357</td>
+<td class='num'>0.500</td>
+<td class='num'>0.167</td>
+<td class='num'>0.438</td>
+<td class='num'>0.417</td>
+<td class='num'>0.417</td></tr>
+<tr><td>Dense</td>
+<td class='num'>0.000</td>
+<td class='num'>0.000</td>
+<td class='num'>0.000</td>
+<td class='num'>0.214</td>
+<td class='num'>0.071</td>
+<td class='num'>0.126</td>
+<td class='num'>0.095</td>
+<td class='num'>0.095</td></tr>
+</tbody></table>
+<h2>Per-query drilldown &mdash; Hybrid + Reranker</h2>
+<table><thead><tr><th>Category</th><th>Query</th><th class='num'>Hit</th><th>Ranked chunk ids</th><th>Relevant</th></tr></thead><tbody>
+<tr><td>short</td><td>ML</td><td class='num miss'>no</td><td><code>sample.txt_f56d360f5be39bb3::chunk-2, sample.txt_f56d360f5be39bb3::chunk-4, sample.txt_f56d360f5be39bb3::chunk-1</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>long_verbose</td><td>I am a researcher studying artificial intelligence algorithms and would like to understand what machine learning means in the context of systems learning from data</td><td class='num hit'>yes</td><td><code>sample.txt_f56d360f5be39bb3::chunk-0, sample.txt_f56d360f5be39bb3::chunk-1, errors.txt_5dca205bf7d74a60::chunk-0</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>ambiguous</td><td>learning systems</td><td class='num miss'>no</td><td><code>sample.txt_f56d360f5be39bb3::chunk-1, sample.txt_f56d360f5be39bb3::chunk-0, sample.txt_f56d360f5be39bb3::chunk-4</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>typos</td><td>how to retreive vectors from vectordb with embedings?</td><td class='num miss'>no</td><td><code>sample.txt_f56d360f5be39bb3::chunk-1, sample.txt_f56d360f5be39bb3::chunk-2, sample.txt_f56d360f5be39bb3::chunk-0</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>exact_identifier</td><td>CODE-42</td><td class='num hit'>yes</td><td><code>errors.txt_5dca205bf7d74a60::chunk-0, sample.txt_f56d360f5be39bb3::chunk-4, sample.txt_f56d360f5be39bb3::chunk-0</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>numerical</td><td>42 error code meaning</td><td class='num hit'>yes</td><td><code>errors.txt_5dca205bf7d74a60::chunk-0, sample.txt_f56d360f5be39bb3::chunk-3, sample.txt_f56d360f5be39bb3::chunk-2</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>temporal</td><td>what is the latest error CODE-42 update</td><td class='num hit'>yes</td><td><code>errors.txt_5dca205bf7d74a60::chunk-0, sample.txt_f56d360f5be39bb3::chunk-0, sample.txt_f56d360f5be39bb3::chunk-1</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>multi_hop</td><td>What is machine learning and what is CODE-42?</td><td class='num hit'>yes</td><td><code>errors.txt_5dca205bf7d74a60::chunk-0, sample.txt_f56d360f5be39bb3::chunk-0, sample.txt_f56d360f5be39bb3::chunk-1</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>multi_turn</td><td>how do I fix it?</td><td class='num hit'>yes</td><td><code>sample.txt_f56d360f5be39bb3::chunk-3, errors.txt_5dca205bf7d74a60::chunk-0, sample.txt_f56d360f5be39bb3::chunk-4</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>out_of_domain</td><td>quantum entanglement thermodynamics astrophysics</td><td class='num miss'>no</td><td><code>sample.txt_f56d360f5be39bb3::chunk-2, sample.txt_f56d360f5be39bb3::chunk-0, sample.txt_f56d360f5be39bb3::chunk-1</code></td><td><code>-</code></td></tr>
+<tr><td>negative_unanswerable</td><td>How to bake a chocolate cake in Python?</td><td class='num miss'>no</td><td><code>sample.txt_f56d360f5be39bb3::chunk-0, sample.txt_f56d360f5be39bb3::chunk-2, sample.txt_f56d360f5be39bb3::chunk-1</code></td><td><code>-</code></td></tr>
+<tr><td>concept</td><td>What is machine learning?</td><td class='num hit'>yes</td><td><code>sample.txt_f56d360f5be39bb3::chunk-0, errors.txt_5dca205bf7d74a60::chunk-0, sample.txt_f56d360f5be39bb3::chunk-1</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>identifier</td><td>What does CODE-42 mean?</td><td class='num hit'>yes</td><td><code>errors.txt_5dca205bf7d74a60::chunk-0, sample.txt_f56d360f5be39bb3::chunk-3, sample.txt_f56d360f5be39bb3::chunk-1</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+<tr><td>multi_topic</td><td>machine learning error handling</td><td class='num miss'>no</td><td><code>sample.txt_f56d360f5be39bb3::chunk-0, sample.txt_f56d360f5be39bb3::chunk-1, sample.txt_f56d360f5be39bb3::chunk-4</code></td><td><code>errors.txt_5dca205bf7d74a60::chunk-0</code></td></tr>
+</tbody></table>
+<div class='foot'>Reranker pairs are measured through a counting proxy; query embedding passes and USD cost are estimates derived from the pipeline specification (indexing cost excluded). Latency percentiles are computed from the timed run itself.</div>
+</body>
+</html>

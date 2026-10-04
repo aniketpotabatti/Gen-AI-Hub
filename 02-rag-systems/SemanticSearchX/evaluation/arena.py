@@ -306,12 +306,15 @@ class RetrievalArena:
                 "primary_score": quality.get(primary, 0.0),
             })
 
+        # Ties are broken by the plan's fixed pipeline catalog order instead of
+        # measured latency: wall-clock timings differ between runs and would
+        # make the leaderboard (and benchmark reports) non-reproducible.
         ordered = sorted(
             pipeline_rows,
             key=lambda row: (
                 -row["primary_score"],
                 -row["quality"].get("mrr", 0.0),
-                row["performance"]["mean_ms"],
+                PIPELINE_ORDER.index(row["name"]),
             ),
         )
         leaderboard = []
@@ -541,8 +544,6 @@ def render_dashboard(report: Dict[str, Any], title: str = "Retrieval Benchmark A
         parts.append(f"<td class='num'>{full['cost']['rerank_pairs']}</td>")
         parts.append("</tr>")
     parts.append("</tbody></table>")
-    return "\n".join(parts)
-
 
     # Full quality matrix
     parts.append("<h2>Quality detail</h2>")

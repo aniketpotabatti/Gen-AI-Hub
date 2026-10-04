@@ -64,6 +64,33 @@ uvicorn api:app --host 0.0.0.0 --port 8000 --reload
 python -m evaluation.arena --help
 ```
 
+## Interactive Dashboard (Streamlit)
+
+A multi-page Streamlit UI sits in front of the REST API for exploring retrieval,
+benchmarking pipelines, diagnosing failures and watching metrics live.
+
+```bash
+# The dashboard talks to the API over HTTP, so run it in its own environment:
+# it needs neither the retrieval core (Torch/FAISS/Qdrant) nor fastapi's pinned
+# web stack.
+python -m venv venv
+venv\Scripts\activate                      # Windows (use `source venv/bin/activate` on POSIX)
+pip install -r dashboard/requirements.txt
+
+# Terminal 1 - backend
+uvicorn api.app:app --port 8000
+
+# Terminal 2 - dashboard
+streamlit run dashboard/streamlit_app.py
+```
+
+Then open <http://localhost:8501>. Pages: **Overview**, **Search Playground**,
+**Corpus & Ingest**, **Benchmark Arena**, **Failure Analysis**, **Observability**.
+
+Point the UI at a different backend with `SEMANTICSEARCHX_API_URL`
+(e.g. `set SEMANTICSEARCHX_API_URL=http://localhost:9000`). The theme lives in
+`dashboard/.streamlit/config.toml`.
+
 ## Running Tests
 
 ```bash

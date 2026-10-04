@@ -42,6 +42,8 @@ from api.schemas import (
     RetrievedDocument,
     IndexRequest,
     IndexResponse,
+    CorpusChunk,
+    CorpusResponse,
     DiagnoseRequest,
     DiagnoseResponse,
     HealthResponse,
@@ -300,6 +302,36 @@ def index_documents(request: IndexRequest):
         indexed_count=indexed,
         total_indexed=total,
         duration_ms=round(duration_ms, 2),
+    )
+
+
+@app.get("/api/v1/corpus", response_model=CorpusResponse, tags=["Ingestion"])
+def list_corpus(limit: int = 50, offset: int = 0, q: Optional[str] = None):
+    """List indexed corpus chunks (paginated) for the dashboard explorer."""
+    if not state:
+        raise HTTPException(status_code=503, detail="Retrieval engine uninitialized")
+
+    corpus = state.get_corpus()
+    metas = state.get_corpus_metas()
+    needle = (q or "").strip().lower()
+
+    items: List[CorpusChunk] = []
+    for chunk_id, text in corpus.items():
+        if needle and needle not in text.lower() and needle not in chunk_id.lower():
+            continue
+        items.append(
+            CorpusChunk(chunk_id=chunk_id, text=text, metadata=metas.get(chunk_id, {}))
+        )
+
+    total = len(items)
+    limit = max(1, min(limit, 200))
+    offset = max(0, offset)
+
+    return CorpusResponse(
+        total=total,
+        offset=offset,
+        limit=limit,
+        chunks=items[offset : offset + limit],
     )
 
 
