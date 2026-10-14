@@ -1,45 +1,46 @@
 # CodeSense
 
-> A real-time, LLM-powered source-code analyzer for the web and VS Code.
+> A real-time, LLM-powered source-code analyzer for the web.
 
 CodeSense gives developers fast, focused help where they write code: explain a snippet, review a saved file, or suggest the next logical completion. It streams results through a local gateway and uses a bring-your-own-key provider configuration in the web UI.
 
 ## Features
 
-- **Explain** — concise, intent-first explanation of the selected or active code.
-- **Review** — structured feedback highlighting strengths, improvements, and one refactor idea.
-- **Suggest** — completion-only output designed for inline / ghost-text experiences.
-- **Streaming responses** — Server-Sent Events (SSE) make feedback appear as it is generated.
-- **Dual editor targets** — a React + Monaco web editor and an initial VS Code extension client.
-- **Bring your own provider** — enter a provider API key directly in the UI; no `.env` file is required.
-- **Flexible provider routing** — direct Anthropic support plus OpenAI-compatible providers such as OpenAI, Gemini, Groq, Together AI, Ollama, and compatible self-hosted endpoints.
-- **Guardrails** — input validation, request-size limits, context trimming, and per-IP rate limiting.
+- **Explain** - concise, intent-first explanation of the selected or active code.
+- **Review** - structured feedback highlighting strengths, improvements, and one refactor idea.
+- **Suggest** - completion-only output designed for inline / ghost-text experiences.
+- **Streaming responses** - Server-Sent Events (SSE) make feedback appear as it is generated.
+- **Web editor** - a React + Monaco web editor.
+- **Bring your own provider** - enter a provider API key directly in the UI; no `.env` file is required.
+- **Flexible provider routing** - direct Anthropic support plus OpenAI-compatible providers such as OpenAI, Gemini, Groq, Together AI, Ollama, and compatible self-hosted endpoints.
+- **Guardrails** - input validation, request-size limits, context trimming, and per-IP rate limiting.
 
 ## Architecture
 
 ```text
-┌───────────────────────┐        ┌──────────────────────────┐
-│  Monaco Web Editor    │        │     VS Code Extension    │
-│  React + Vite         │        │     TypeScript           │
-└───────────┬───────────┘        └────────────┬─────────────┘
-            │                                  │
-            └──────────── POST + SSE ──────────┘
-                              │
-                   ┌──────────▼──────────┐
-                   │  CodeSense Gateway  │
-                   │ Express · validation│
-                   │ rate limits · prompts│
-                   └──────────┬──────────┘
-                              │
-              ┌───────────────┴────────────────┐
-              │                                │
-     ┌────────▼────────┐              ┌────────▼────────┐
-     │ Anthropic Claude │              │ OpenAI-compatible│
-     │ direct API       │              │ provider endpoint │
-     └─────────────────┘              └─────────────────┘
++-----------------------+
+|  Monaco Web Editor    |
+|  React + Vite         |
++-----------+-----------+
+            |
+            | POST + SSE
+            v
++-----------------------+
+|  CodeSense Gateway    |
+|  Express, validation  |
+|  rate limits, prompts |
++-----------+-----------+
+            |
+      +-----+---------------+
+      |                     |
++-----v------+      +-------v--------+
+| Anthropic  |      | OpenAI-        |
+| Claude     |      | compatible     |
+| direct API |      | provider       |
++------------+      +----------------+
 ```
 
-The shared `@codesense/core` package holds prompt construction, request validation, and cursor-aware context extraction. Editors send only the nearby code window rather than the full file.
+The shared `@codesense/core` package holds prompt construction, request validation, and cursor-aware context extraction. The web editor sends only the nearby code window rather than the full file.
 
 ## Tech Stack
 
@@ -48,20 +49,18 @@ The shared `@codesense/core` package holds prompt construction, request validati
 | Web editor | React, Vite, Monaco Editor |
 | Gateway | Node.js, Express, SSE |
 | Providers | Anthropic SDK, OpenAI SDK |
-| VS Code client | TypeScript, VS Code API, esbuild |
 | Shared logic | Native JavaScript workspace package |
 
 ## Project Structure
 
 ```text
 codesense/
-├── apps/
-│   ├── gateway/            # Secure LLM proxy and SSE API
-│   ├── web/                # React + Monaco editor
-│   └── vscode-extension/   # VS Code extension client
-├── packages/
-│   └── core/               # Prompts, validation, context extraction
-└── package.json
++-- apps/
+|   +-- gateway/            # Secure LLM proxy and SSE API
+|   +-- web/                # React + Monaco editor
++-- packages/
+|   +-- core/               # Prompts, validation, context extraction
++-- package.json
 ```
 
 ## Getting Started
@@ -92,7 +91,7 @@ Choose a provider in the **Connection** panel, enter its API key, and optionally
 | Anthropic Claude | Required | Not required | `claude-3-5-haiku-latest` |
 | Google Gemini | Required | Set automatically; can be overridden | `gemini-2.0-flash` |
 
-For OpenAI-compatible providers, enter the provider's OpenAI-compatible base URL and a model name available in your account. Examples include:
+For OpenAI-compatible providers, enter the provider OpenAI-compatible base URL and a model name available in your account. Examples include:
 
 | Provider | Base URL | Example model |
 | --- | --- | --- |
@@ -166,26 +165,14 @@ Returns service status. Provider keys are supplied per request from the UI and n
 - Requests are limited to 30 per IP per minute in this development implementation.
 - Generated review output is capped at 600 tokens; explain and suggest output at 400 tokens.
 
-## VS Code Extension
-
-Build the extension bundle:
-
-```bash
-npm run build --workspace=codesense-vscode
-```
-
-The initial extension provides **CodeSense: Explain Selection**. Open the extension folder in VS Code, run the extension host, select code, and invoke the command from the Command Palette. It expects the gateway at `http://localhost:8787` by default.
-
 ## Roadmap
 
 - [x] Secure streaming gateway
 - [x] Monaco web editor with explain, review, and suggest modes
-- [x] Initial VS Code explain command
 - [ ] Web inline completion rendering
-- [ ] VS Code inline completion provider and review panel
 - [ ] User-configurable debounce and model settings
 - [ ] Automated tests and CI
-- [ ] Deployment configuration and extension packaging
+- [ ] Deployment configuration
 
 ## Contributing
 
@@ -193,4 +180,4 @@ Issues and pull requests are welcome. New provider adapters should preserve the 
 
 ## License
 
-MIT — see the [Gen-AI-Hub](https://github.com/aniketpotabatti/gen-ai-hub) repository LICENSE.
+MIT - see the [Gen-AI-Hub](https://github.com/aniketpotabatti/gen-ai-hub) repository LICENSE.
