@@ -50,6 +50,12 @@ export interface DocPlan {
   reasoning: string;
 }
 
+export interface LLMConfig {
+  apiKey?: string;
+  provider?: "gemini" | "openai";
+  model?: string;
+}
+
 // ── API Calls ─────────────────────────────────────────────────────────────────
 
 export async function parseCode(
@@ -66,12 +72,18 @@ export async function parseCode(
 }
 
 export async function planDoc(
-  code_context: CodeContext
+  code_context: CodeContext,
+  config?: LLMConfig
 ): Promise<{ success: boolean; doc_plan?: DocPlan; error?: string }> {
   const res = await fetch(`${API_BASE}/api/generate/plan`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code_context }),
+    body: JSON.stringify({
+      code_context,
+      api_key: config?.apiKey || undefined,
+      provider: config?.provider || undefined,
+      model: config?.model || undefined,
+    }),
   });
   if (!res.ok) throw new Error(`Planning failed: ${res.statusText}`);
   return res.json();
@@ -87,7 +99,8 @@ export function writeSection(
   section_id: string,
   onChunk: (chunk: string) => void,
   onDone: () => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
+  config?: LLMConfig
 ): () => void {
   let cancelled = false;
 
@@ -96,7 +109,14 @@ export function writeSection(
       const res = await fetch(`${API_BASE}/api/generate/write`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code_context, doc_plan, section_id }),
+        body: JSON.stringify({
+          code_context,
+          doc_plan,
+          section_id,
+          api_key: config?.apiKey || undefined,
+          provider: config?.provider || undefined,
+          model: config?.model || undefined,
+        }),
       });
 
       if (!res.ok || !res.body) {

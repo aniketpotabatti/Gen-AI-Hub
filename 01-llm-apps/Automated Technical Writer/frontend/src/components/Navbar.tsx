@@ -31,7 +31,13 @@ export default function Navbar() {
         </Link>
 
         {/* Nav links */}
-        <div className="hidden md:flex items-center gap-6">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/editor"
+            className="text-xs px-3 py-1.5 rounded-lg bg-violet-600/30 text-violet-300 hover:bg-violet-600/50 border border-violet-500/30 transition-all font-medium"
+          >
+            Launch Editor →
+          </Link>
           <a
             href="https://github.com/aniketpotabatti/GenAIHub/tree/main/01-llm-apps/Automated%20Technical%20Writer"
             target="_blank"

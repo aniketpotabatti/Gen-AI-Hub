@@ -27,6 +27,108 @@ const EXTENSION_MAP: Record<string, string> = {
   ".rs": "rust",
 };
 
+const SAMPLE_TEMPLATES = [
+  {
+    name: "Python FastAPI",
+    filename: "auth_service.py",
+    code: `"""
+Authentication and JWT token management service.
+Provides user verification, token generation, and password hashing.
+"""
+from datetime import datetime, timedelta
+from typing import Optional
+from pydantic import BaseModel, EmailStr
+
+class TokenPayload(BaseModel):
+    user_id: str
+    email: EmailStr
+    role: str = "member"
+    exp: datetime
+
+class AuthService:
+    """Manages secure authentication lifecycles and token validation."""
+
+    def __init__(self, secret_key: str, token_ttl_minutes: int = 60):
+        self.secret_key = secret_key
+        self.ttl = timedelta(minutes=token_ttl_minutes)
+
+    def hash_password(self, plain_password: str) -> str:
+        """Hash a plaintext password using a salt and hash algorithm."""
+        # Simulated secure hashing
+        return f"hashed_{plain_password}_secure"
+
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify that the supplied plaintext password matches the stored hash."""
+        return self.hash_password(plain_password) == hashed_password
+
+    def generate_token(self, user_id: str, email: str, role: str = "member") -> str:
+        """Issue a signed JWT token valid for the configured TTL."""
+        expiry = datetime.utcnow() + self.ttl
+        payload = TokenPayload(user_id=user_id, email=email, role=role, exp=expiry)
+        return f"jwt.{payload.user_id}.signature"
+
+    def validate_token(self, token: str) -> Optional[TokenPayload]:
+        """Decode and validate a token's integrity and expiration."""
+        if not token.startswith("jwt."):
+            return None
+        return TokenPayload(user_id="user_123", email="user@example.com", role="member", exp=datetime.utcnow() + timedelta(hours=1))
+`,
+  },
+  {
+    name: "TypeScript Client",
+    filename: "cacheClient.ts",
+    code: `/**
+ * Resilient In-Memory LRU Cache with TTL expiry support.
+ */
+
+export interface CacheEntry<T> {
+  value: T;
+  expiresAt: number;
+}
+
+export class LRUCache<T> {
+  private capacity: number;
+  private defaultTtlMs: number;
+  private store: Map<string, CacheEntry<T>>;
+
+  constructor(capacity: number = 100, defaultTtlMs: number = 60000) {
+    this.capacity = capacity;
+    this.defaultTtlMs = defaultTtlMs;
+    this.store = new Map();
+  }
+
+  public get(key: string): T | null {
+    const entry = this.store.get(key);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      return null;
+    }
+    // Re-insert to refresh LRU order
+    this.store.delete(key);
+    this.store.set(key, entry);
+    return entry.value;
+  }
+
+  public set(key: string, value: T, ttlMs?: number): void {
+    if (this.store.has(key)) {
+      this.store.delete(key);
+    } else if (this.store.size >= this.capacity) {
+      const oldestKey = this.store.keys().next().value;
+      if (oldestKey) this.store.delete(oldestKey);
+    }
+    const expiresAt = Date.now() + (ttlMs ?? this.defaultTtlMs);
+    this.store.set(key, { value, expiresAt });
+  }
+
+  public clear(): void {
+    this.store.clear();
+  }
+}
+`,
+  },
+];
+
 function detectLanguage(filename: string): string {
   const ext = "." + filename.split(".").pop()?.toLowerCase();
   return EXTENSION_MAP[ext] || "text";
@@ -34,7 +136,7 @@ function detectLanguage(filename: string): string {
 
 export default function CodeUploader({ onCodeReady, isLoading }: CodeUploaderProps) {
   const [code, setCode] = useState("");
-  const [filename, setFilename] = useState("main.py");
+  const [filename, setFilename] = useState("auth_service.py");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -83,17 +185,37 @@ export default function CodeUploader({ onCodeReady, isLoading }: CodeUploaderPro
         </div>
       </div>
 
-      {/* Filename input */}
-      <div className="flex items-center gap-2">
-        <span className="text-white/30 text-sm">📄</span>
-        <input
-          type="text"
-          value={filename}
-          onChange={(e) => setFilename(e.target.value)}
-          className="flex-1 bg-transparent text-sm text-white/70 border-b border-white/10 focus:border-violet-500/50 outline-none pb-1 transition-colors placeholder:text-white/20"
-          placeholder="filename.py"
-          id="filename-input"
-        />
+      {/* Filename input & Quick Templates */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-1">
+          <span className="text-white/30 text-sm">📄</span>
+          <input
+            type="text"
+            value={filename}
+            onChange={(e) => setFilename(e.target.value)}
+            className="w-full bg-transparent text-sm text-white/70 border-b border-white/10 focus:border-violet-500/50 outline-none pb-1 transition-colors placeholder:text-white/20 font-mono"
+            placeholder="filename.py"
+            id="filename-input"
+          />
+        </div>
+
+        {/* Quick presets */}
+        <div className="flex items-center gap-1.5 self-end sm:self-auto">
+          <span className="text-[11px] text-white/40">Presets:</span>
+          {SAMPLE_TEMPLATES.map((tmpl) => (
+            <button
+              key={tmpl.name}
+              type="button"
+              onClick={() => {
+                setFilename(tmpl.filename);
+                setCode(tmpl.code);
+              }}
+              className="text-[11px] px-2 py-0.5 rounded-md bg-white/5 hover:bg-violet-500/20 text-white/60 hover:text-violet-300 border border-white/5 hover:border-violet-500/20 transition-all font-medium"
+            >
+              {tmpl.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Drop zone / Textarea */}
