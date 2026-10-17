@@ -54,18 +54,30 @@ export interface LLMConfig {
   apiKey?: string;
   provider?: "gemini" | "openai";
   model?: string;
+  tone?: "balanced" | "concise" | "tutorial" | "in-depth";
+  audience?: "beginner" | "intermediate" | "expert";
 }
 
 // ── API Calls ─────────────────────────────────────────────────────────────────
 
+export interface CodeFileEntry {
+  filename: string;
+  code: string;
+}
+
 export async function parseCode(
   code: string,
-  filename: string
+  filename: string,
+  files?: CodeFileEntry[]
 ): Promise<{ success: boolean; code_context?: CodeContext; error?: string }> {
   const res = await fetch(`${API_BASE}/api/generate/parse`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code, filename }),
+    body: JSON.stringify({
+      code,
+      filename,
+      files: files && files.length > 0 ? files : undefined,
+    }),
   });
   if (!res.ok) throw new Error(`Parse failed: ${res.statusText}`);
   return res.json();
@@ -83,6 +95,8 @@ export async function planDoc(
       api_key: config?.apiKey || undefined,
       provider: config?.provider || undefined,
       model: config?.model || undefined,
+      tone: config?.tone || undefined,
+      audience: config?.audience || undefined,
     }),
   });
   if (!res.ok) throw new Error(`Planning failed: ${res.statusText}`);
@@ -116,6 +130,8 @@ export function writeSection(
           api_key: config?.apiKey || undefined,
           provider: config?.provider || undefined,
           model: config?.model || undefined,
+          tone: config?.tone || undefined,
+          audience: config?.audience || undefined,
         }),
       });
 

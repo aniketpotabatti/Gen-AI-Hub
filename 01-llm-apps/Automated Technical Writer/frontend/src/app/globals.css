@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ── Design Tokens ─────────────────────────────────────────────────────────── */
 :root {
-  --bg-primary:      #0a0a0f;
-  --bg-secondary:    #0d0d14;
-  --bg-card:         rgba(255,255,255,0.03);
+  --bg-primary:      #08080d;
+  --bg-secondary:    #0c0c14;
+  --bg-card:         rgba(255,255,255,0.025);
   --border:          rgba(255,255,255,0.07);
-  --border-hover:    rgba(255,255,255,0.14);
+  --border-hover:    rgba(255,255,255,0.15);
   --text-primary:    #f8fafc;
   --text-secondary:  rgba(248,250,252,0.7);
   --text-muted:      rgba(248,250,252,0.4);
@@ -32,21 +32,35 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
 
 /* ── Glass Panel ───────────────────────────────────────────────────────────── */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(16px);
   box-shadow:
-    0 0 0 1px rgba(255,255,255,0.03) inset,
-    0 4px 24px rgba(0,0,0,0.4);
+    0 0 0 1px rgba(255,255,255,0.04) inset,
+    0 8px 32px rgba(0,0,0,0.45);
+}
+
+.glass-panel-hover {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel-hover:hover {
+  border-color: rgba(167, 139, 250, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(167, 139, 250, 0.15) inset,
+    0 12px 40px rgba(124, 58, 237, 0.12);
 }
 
 /* ── Gradient Text ─────────────────────────────────────────────────────────── */
