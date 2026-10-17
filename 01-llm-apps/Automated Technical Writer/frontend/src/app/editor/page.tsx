@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import Link from "next/link";
 import CodeUploader from "@/components/CodeUploader";
 import DocArchitecture from "@/components/DocArchitecture";
 import StreamingOutput from "@/components/StreamingOutput";
@@ -189,41 +190,59 @@ export default function EditorPage() {
   return (
     <div className="min-h-screen flex flex-col bg-[#08080d]">
       {/* Top bar */}
-      <div className="mt-16 border-b border-white/[0.06] bg-[#0c0c14]/90 backdrop-blur-md">
+      <div className="mt-16 border-b border-white/[0.08] bg-[#0c0c14]/95 backdrop-blur-md">
         <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-white/40 hover:text-white/60 transition-colors cursor-pointer">
-              Workspace
-            </span>
+            <Link
+              href="/"
+              className="text-xs text-white/40 hover:text-violet-300 transition-colors flex items-center gap-1"
+            >
+              <span>←</span>
+              <span>Home</span>
+            </Link>
             <span className="text-white/20 text-xs">/</span>
-            <span className="text-xs font-semibold text-white/90 font-mono">
-              {codeContext ? codeContext.filename : "draft_project"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+              <span className="text-xs font-semibold text-white/90 font-mono">
+                {codeContext ? codeContext.filename : "workspace"}
+              </span>
+            </div>
 
             {/* Pipeline Stage Badge */}
             {stage === "parsing" && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300 flex items-center gap-1.5 font-mono">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300 flex items-center gap-1.5 font-mono">
                 <span className="w-2 h-2 border border-violet-400 border-t-transparent rounded-full animate-spin" />
                 Parsing AST...
               </span>
             )}
             {stage === "planning" && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 flex items-center gap-1.5 font-mono">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 flex items-center gap-1.5 font-mono">
                 <span className="w-2 h-2 border border-cyan-400 border-t-transparent rounded-full animate-spin" />
                 Planning Architecture...
               </span>
             )}
             {stage === "writing" && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-1.5 font-mono">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center gap-1.5 font-mono">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                Streaming SSE...
+                Streaming Section...
               </span>
             )}
             {stage === "ready" && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-mono">
-                ● Studio Ready
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 font-mono flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Studio Ready
               </span>
             )}
+
+            {/* Active Model Pill */}
+            <span
+              onClick={() => setIsSettingsOpen(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/10 text-white/50 hover:border-violet-500/30 hover:text-white/80 transition-colors font-mono cursor-pointer"
+              title="Click to configure Model & API Key in Settings"
+            >
+              <span className="text-violet-400">⚡</span>
+              {llmConfig.model}
+            </span>
           </div>
 
           <div className="flex items-center gap-2.5">
