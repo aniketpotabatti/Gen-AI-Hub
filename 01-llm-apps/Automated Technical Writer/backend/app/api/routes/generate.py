@@ -31,11 +31,48 @@ logger = logging.getLogger(__name__)
 async def parse_code_endpoint(request: ParseRequest):
     """
     Parse raw source code into a structured CodeContext.
-    This is the first step in the Code-to-Doc pipeline.
+    Supports both single-file and multi-file project folder payloads.
     """
     try:
-        code_context = parse_code(code=request.code, filename=request.filename)
-        return ParseResponse(success=True, code_context=code_context)
+        if request.files and len(request.files) > 0:
+            # Multi-file or project folder mode: parse all files and combine context
+            combined_functions = []
+            combined_classes = []
+            combined_imports = []
+            combined_raw_parts = []
+            total_lines = 0
+            main_lang = "python"
+
+            for file_entry in request.files:
+                ctx = parse_code(code=file_entry.code, filename=file_entry.filename)
+                combined_functions.extend(ctx.functions)
+                combined_classes.extend(ctx.classes)
+                combined_imports.extend(ctx.imports)
+                total_lines += ctx.total_lines
+                main_lang = ctx.language
+                combined_raw_parts.append(
+                    f"### File: {file_entry.filename} ({ctx.language})\n```{ctx.language}\n{file_entry.code}\n```"
+                )
+
+            # Deduplicate imports
+            combined_imports = list(dict.fromkeys(combined_imports))
+            combined_raw = "\n\n".join(combined_raw_parts)
+
+            project_name = request.filename if request.filename != "code.py" else f"Project ({len(request.files)} files)"
+            combined_ctx = CodeContext(
+                language=main_lang,
+                filename=project_name,
+                raw_code=combined_raw,
+                functions=combined_functions,
+                classes=combined_classes,
+                imports=combined_imports,
+                module_docstring=f"Multi-file codebase containing {len(request.files)} files.",
+                total_lines=total_lines,
+            )
+            return ParseResponse(success=True, code_context=combined_ctx)
+        else:
+            code_context = parse_code(code=request.code or "", filename=request.filename)
+            return ParseResponse(success=True, code_context=code_context)
     except Exception as e:
         logger.exception("Code parsing failed")
         return ParseResponse(success=False, error=str(e))
@@ -48,7 +85,12 @@ async def plan_docs_endpoint(request: PlanRequest):
     Returns a proposed documentation structure for user approval.
     """
     try:
-        doc_plan = run_planner_chain(request.code_context)
+        doc_plan = run_planner_chain(
+            code_context=request.code_context,
+            api_key=request.api_key,
+            provider=request.provider,
+            model=request.model,
+        )
         return PlanResponse(success=True, doc_plan=doc_plan)
     except Exception as e:
         logger.exception("Doc planning failed")
@@ -79,6 +121,11 @@ async def write_section_endpoint(request: WriteRequest):
                 code_context=request.code_context,
                 doc_plan=request.doc_plan,
                 section=section,
+                api_key=request.api_key,
+                provider=request.provider,
+                model=request.model,
+                tone=request.tone,
+                audience=request.audience,
             ):
                 yield {"event": "token", "data": chunk}
             # Signal completion

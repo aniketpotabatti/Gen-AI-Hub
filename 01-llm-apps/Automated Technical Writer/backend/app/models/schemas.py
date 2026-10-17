@@ -55,11 +55,15 @@ class DocPlan(BaseModel):
     reasoning: str
 
 
-# ── Request / Response Schemas ────────────────────────────────────────────────
+class CodeFile(BaseModel):
+    filename: str
+    code: str
+
 
 class ParseRequest(BaseModel):
-    code: str = Field(..., description="Raw source code string")
+    code: Optional[str] = Field(default=None, description="Raw source code string (single file mode)")
     filename: str = Field(default="code.py", description="Filename (used for language detection)")
+    files: Optional[list[CodeFile]] = Field(default=None, description="List of files for multi-file/project mode")
 
 
 class ParseResponse(BaseModel):
@@ -70,6 +74,11 @@ class ParseResponse(BaseModel):
 
 class PlanRequest(BaseModel):
     code_context: CodeContext
+    api_key: Optional[str] = Field(default=None, description="Optional user-provided LLM API Key")
+    provider: Optional[str] = Field(default=None, description="Optional provider (gemini or openai)")
+    model: Optional[str] = Field(default=None, description="Optional model name")
+    tone: Optional[str] = Field(default=None, description="Documentation tone (balanced, concise, tutorial, in-depth)")
+    audience: Optional[str] = Field(default=None, description="Audience level (beginner, intermediate, expert)")
 
 
 class PlanResponse(BaseModel):
@@ -82,6 +91,11 @@ class WriteRequest(BaseModel):
     code_context: CodeContext
     doc_plan: DocPlan
     section_id: str = Field(..., description="ID of the section to generate")
+    api_key: Optional[str] = Field(default=None, description="Optional user-provided LLM API Key")
+    provider: Optional[str] = Field(default=None, description="Optional provider (gemini or openai)")
+    model: Optional[str] = Field(default=None, description="Optional model name")
+    tone: Optional[str] = Field(default=None, description="Documentation tone (balanced, concise, tutorial, in-depth)")
+    audience: Optional[str] = Field(default=None, description="Audience level (beginner, intermediate, expert)")
 
 
 class ExportRequest(BaseModel):

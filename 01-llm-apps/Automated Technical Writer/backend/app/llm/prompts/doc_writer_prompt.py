@@ -14,7 +14,8 @@ Critical rules:
 - Always include working code examples using the actual function/class names from the code
 - Use markdown formatting consistently
 - Start directly with the section content — no preamble
-- Keep the tone professional, clear, and helpful
+- Tone guideline: {tone_guideline}
+- Target audience: {audience_guideline}
 """
 
 WRITER_HUMAN = """Write the **{section_title}** section of the documentation.
@@ -50,7 +51,13 @@ def build_writer_prompt() -> ChatPromptTemplate:
     ])
 
 
-def format_writer_input(ctx: CodeContext, plan: DocPlan, section: DocSection) -> dict:
+def format_writer_input(
+    ctx: CodeContext,
+    plan: DocPlan,
+    section: DocSection,
+    tone: str | None = None,
+    audience: str | None = None,
+) -> dict:
     """Format inputs for the writer prompt."""
     functions_detail = "\n".join(
         f"- **{f.name}**({', '.join(f.params)}) -> {f.return_type or 'None'}\n"
@@ -63,6 +70,23 @@ def format_writer_input(ctx: CodeContext, plan: DocPlan, section: DocSection) ->
         + "\n".join(f"  - {m.name}({', '.join(m.params)})" for m in c.methods[:10])
         for c in ctx.classes[:5]
     ) or "(no classes)"
+
+    # Tone instructions
+    tone_map = {
+        "concise": "Keep explanations ultra-brief, direct, and bullet-point oriented. Minimize prose.",
+        "tutorial": "Provide step-by-step guidance, clear prerequisites, and practical walkthroughs.",
+        "in-depth": "Provide extensive architectural depth, edge-case coverage, and detailed commentary.",
+        "balanced": "Keep the tone professional, clear, and balanced between conceptual clarity and code examples.",
+    }
+    tone_guideline = tone_map.get((tone or "").lower(), tone_map["balanced"])
+
+    # Audience instructions
+    audience_map = {
+        "beginner": "Target beginners: clarify technical concepts gently, avoid unexplained jargon, and explain basic patterns.",
+        "expert": "Target senior engineers and architects: assume deep domain knowledge, focus on internals, concurrency, and performance.",
+        "intermediate": "Target intermediate developers: balanced technical depth with idiomatic code snippets.",
+    }
+    audience_guideline = audience_map.get((audience or "").lower(), audience_map["intermediate"])
 
     # Use first 2000 chars of code as context snippet
     code_snippet = ctx.raw_code[:2000]
@@ -80,4 +104,6 @@ def format_writer_input(ctx: CodeContext, plan: DocPlan, section: DocSection) ->
         "functions_detail": functions_detail,
         "classes_detail": classes_detail,
         "code_snippet": code_snippet,
+        "tone_guideline": tone_guideline,
+        "audience_guideline": audience_guideline,
     }
