@@ -3,12 +3,6 @@
 import { useState, useRef, useCallback } from "react";
 import type { CodeContext, CodeFileEntry } from "@/lib/api";
 
-interface CodeUploaderProps {
-  onCodeReady: (code: string, filename: string, files?: CodeFileEntry[]) => void;
-  isLoading?: boolean;
-  codeContext?: CodeContext | null;
-}
-
 const LANGUAGE_COLORS: Record<string, string> = {
   python: "bg-blue-500/20 text-blue-300 border-blue-500/30",
   javascript: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
@@ -192,7 +186,21 @@ function isSupportedFile(name: string): boolean {
   return SUPPORTED_EXTS.has(ext);
 }
 
-export default function CodeUploader({ onCodeReady, isLoading, codeContext }: CodeUploaderProps) {
+interface CodeUploaderProps {
+  onCodeReady: (code: string, filename: string, files?: CodeFileEntry[]) => void;
+  isLoading: boolean;
+  codeContext: CodeContext | null;
+  isMaximized?: boolean;
+  onToggleMaximize?: () => void;
+}
+
+export default function CodeUploader({
+  onCodeReady,
+  isLoading,
+  codeContext,
+  isMaximized = false,
+  onToggleMaximize,
+}: CodeUploaderProps) {
   const [activeTab, setActiveTab] = useState<"code" | "files" | "ast">("code");
   const [code, setCode] = useState(SAMPLE_TEMPLATES[0].code);
   const [filename, setFilename] = useState(SAMPLE_TEMPLATES[0].filename);
@@ -330,9 +338,30 @@ export default function CodeUploader({ onCodeReady, isLoading, codeContext }: Co
           </button>
         </div>
 
-        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium font-mono ${langColor}`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current" />
-          {language}
+        <div className="flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium font-mono ${langColor}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+            {language}
+          </div>
+
+          {onToggleMaximize && (
+            <button
+              type="button"
+              onClick={onToggleMaximize}
+              title={isMaximized ? "Restore split layout" : "Large View (Maximize)"}
+              className="w-7 h-7 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 text-white/60 hover:text-white flex items-center justify-center transition-all"
+            >
+              {isMaximized ? (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9L4 4m0 0v5m0-5h5m6 6l5 5m0 0v-5m0 5h-5" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

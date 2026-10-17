@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import CodeUploader from "@/components/CodeUploader";
 import DocArchitecture from "@/components/DocArchitecture";
@@ -185,13 +185,118 @@ export default function EditorPage() {
     await runNext(pendingSections);
   }, [codeContext, docPlan, generatingId, completedIds, sectionsContent, llmConfig]);
 
+  // Resizable split panel state (percentages for left, middle, right)
+  const [panelWidths, setPanelWidths] = useState<[number, number, number]>([38, 24, 38]);
+  const [maximizedPanel, setMaximizedPanel] = useState<"code" | "arch" | "doc" | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const draggingDivider = useRef<1 | 2 | null>(null);
+
+  // Load saved panel widths from localStorage
+  useEffect(() => {
+    try {
+      const savedWidths = localStorage.getItem("autowriter_panel_widths");
+      if (savedWidths) {
+        const parsed = JSON.parse(savedWidths);
+        if (Array.isArray(parsed) && parsed.length === 3) {
+          setPanelWidths([parsed[0], parsed[1], parsed[2]]);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load panel widths", e);
+    }
+  }, []);
+
+  const handleResetLayout = () => {
+    setMaximizedPanel(null);
+    const defaultWidths: [number, number, number] = [38, 24, 38];
+    setPanelWidths(defaultWidths);
+    try {
+      localStorage.setItem("autowriter_panel_widths", JSON.stringify(defaultWidths));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const startDragging = (divider: 1 | 2) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingDivider.current = divider;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!containerRef.current || !draggingDivider.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const totalWidth = rect.width;
+      if (totalWidth <= 0) return;
+
+      const currentX = moveEvent.clientX - rect.left;
+      const currentPct = (currentX / totalWidth) * 100;
+
+      if (draggingDivider.current === 1) {
+        // Divider between Code (P1) and Arch (P2)
+        // Clamp P1 between 15% and 60%
+        const minP1 = 15;
+        const maxP1 = 60;
+        const newP1 = Math.min(Math.max(currentPct, minP1), maxP1);
+
+        // Adjust P2 while keeping P3 unchanged
+        const currentP3 = panelWidths[2];
+        const newP2 = Math.max(100 - newP1 - currentP3, 12);
+        const actualP3 = 100 - newP1 - newP2;
+
+        setPanelWidths([
+          parseFloat(newP1.toFixed(1)),
+          parseFloat(newP2.toFixed(1)),
+          parseFloat(actualP3.toFixed(1)),
+        ]);
+      } else if (draggingDivider.current === 2) {
+        // Divider between Arch (P2) and Docs (P3)
+        // currentPct is the position of divider 2 from left
+        const currentP1 = panelWidths[0];
+        const minP2 = 12;
+        const minP3 = 18;
+
+        const availableFromP1 = currentPct - currentP1;
+        const newP2 = Math.min(Math.max(availableFromP1, minP2), 65);
+        const newP3 = Math.max(100 - currentP1 - newP2, minP3);
+        const actualP2 = 100 - currentP1 - newP3;
+
+        setPanelWidths([
+          parseFloat(currentP1.toFixed(1)),
+          parseFloat(actualP2.toFixed(1)),
+          parseFloat(newP3.toFixed(1)),
+        ]);
+      }
+    };
+
+    const onMouseUp = () => {
+      draggingDivider.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+
+      setPanelWidths((current) => {
+        try {
+          localStorage.setItem("autowriter_panel_widths", JSON.stringify(current));
+        } catch (e) {
+          console.error(e);
+        }
+        return current;
+      });
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
   const isStreaming = stage === "writing";
 
   return (
     <div className="min-h-screen flex flex-col bg-[#08080d]">
       {/* Top bar */}
       <div className="mt-16 border-b border-white/[0.08] bg-[#0c0c14]/95 backdrop-blur-md">
-        <div className="max-w-[1600px] mx-auto px-6 py-2.5 flex items-center justify-between">
+        <div className="max-w-[1720px] mx-auto px-6 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -246,6 +351,19 @@ export default function EditorPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
+            {/* Split layout quick reset / preset button */}
+            {(maximizedPanel || panelWidths[0] !== 38 || panelWidths[1] !== 24 || panelWidths[2] !== 38) && (
+              <button
+                type="button"
+                onClick={handleResetLayout}
+                className="text-[11px] px-2.5 py-1 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:text-white text-white/60 transition-all font-mono flex items-center gap-1.5"
+                title="Reset panels to default 3-column split view"
+              >
+                <span>↺</span>
+                <span>Reset View</span>
+              </button>
+            )}
+
             <ExportButton
               plan={docPlan}
               sectionsContent={sectionsContent}
@@ -291,7 +409,7 @@ export default function EditorPage() {
 
       {/* Error banner */}
       {errorMsg && (
-        <div className="max-w-[1600px] mx-auto px-6 pt-4 w-full">
+        <div className="max-w-[1720px] mx-auto px-6 pt-4 w-full">
           <div className="flex items-center gap-3 p-4 rounded-xl border border-red-500/20 bg-red-500/10 text-red-300 text-sm">
             <span>⚠️</span>
             <span className="flex-1">{errorMsg}</span>
@@ -305,21 +423,51 @@ export default function EditorPage() {
         </div>
       )}
 
-      {/* 3-panel editor */}
-      <div className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px_1fr] gap-4 h-[calc(100vh-160px)]">
-
+      {/* 3-panel Resizable Studio Container */}
+      <div className="flex-1 max-w-[1720px] mx-auto w-full px-4 sm:px-6 py-4 flex flex-col min-h-0">
+        <div
+          ref={containerRef}
+          className="relative flex-1 flex flex-col lg:flex-row gap-0 h-[calc(100vh-140px)] min-h-[550px] w-full"
+        >
           {/* Panel 1: Code Uploader */}
-          <div className="glass-panel p-4 flex flex-col overflow-hidden">
+          <div
+            style={{
+              flex: maximizedPanel === "code" ? "1 1 100%" : maximizedPanel ? "0 0 0%" : `0 0 ${panelWidths[0]}%`,
+              display: maximizedPanel && maximizedPanel !== "code" ? "none" : "flex",
+            }}
+            className="glass-panel p-4 flex-col overflow-hidden min-w-[280px] transition-[flex] duration-150 relative"
+          >
             <CodeUploader
               onCodeReady={handleCodeReady}
               isLoading={stage === "parsing" || stage === "planning"}
               codeContext={codeContext}
+              isMaximized={maximizedPanel === "code"}
+              onToggleMaximize={() => setMaximizedPanel(maximizedPanel === "code" ? null : "code")}
             />
           </div>
 
+          {/* Divider Handle 1 (Between Panel 1 and Panel 2) */}
+          {!maximizedPanel && (
+            <div
+              onMouseDown={startDragging(1)}
+              className="hidden lg:flex w-2.5 hover:w-2.5 -mx-1 z-20 cursor-col-resize group items-center justify-center transition-all select-none"
+              title="Drag to resize panels"
+            >
+              <div className="w-[1.5px] h-12 bg-white/10 group-hover:bg-violet-400 group-hover:h-24 group-hover:w-[2px] transition-all rounded-full flex flex-col items-center justify-center gap-1 shadow-sm">
+                <span className="w-1 h-1 rounded-full bg-white/40 group-hover:bg-violet-300 inline-block" />
+                <span className="w-1 h-1 rounded-full bg-white/40 group-hover:bg-violet-300 inline-block" />
+              </div>
+            </div>
+          )}
+
           {/* Panel 2: Doc Architecture */}
-          <div className="glass-panel p-4 flex flex-col overflow-hidden">
+          <div
+            style={{
+              flex: maximizedPanel === "arch" ? "1 1 100%" : maximizedPanel ? "0 0 0%" : `0 0 ${panelWidths[1]}%`,
+              display: maximizedPanel && maximizedPanel !== "arch" ? "none" : "flex",
+            }}
+            className="glass-panel p-4 flex-col overflow-hidden min-w-[220px] transition-[flex] duration-150 relative"
+          >
             <DocArchitecture
               plan={docPlan}
               generatingId={generatingId}
@@ -327,15 +475,39 @@ export default function EditorPage() {
               onGenerateSection={handleGenerateSection}
               onGenerateAll={handleGenerateAll}
               onUpdatePlan={(updated) => setDocPlan(updated)}
+              isMaximized={maximizedPanel === "arch"}
+              onToggleMaximize={() => setMaximizedPanel(maximizedPanel === "arch" ? null : "arch")}
             />
           </div>
 
+          {/* Divider Handle 2 (Between Panel 2 and Panel 3) */}
+          {!maximizedPanel && (
+            <div
+              onMouseDown={startDragging(2)}
+              className="hidden lg:flex w-2.5 hover:w-2.5 -mx-1 z-20 cursor-col-resize group items-center justify-center transition-all select-none"
+              title="Drag to resize panels"
+            >
+              <div className="w-[1.5px] h-12 bg-white/10 group-hover:bg-violet-400 group-hover:h-24 group-hover:w-[2px] transition-all rounded-full flex flex-col items-center justify-center gap-1 shadow-sm">
+                <span className="w-1 h-1 rounded-full bg-white/40 group-hover:bg-violet-300 inline-block" />
+                <span className="w-1 h-1 rounded-full bg-white/40 group-hover:bg-violet-300 inline-block" />
+              </div>
+            </div>
+          )}
+
           {/* Panel 3: Streaming Output */}
-          <div className="glass-panel p-4 flex flex-col overflow-hidden">
+          <div
+            style={{
+              flex: maximizedPanel === "doc" ? "1 1 100%" : maximizedPanel ? "0 0 0%" : `0 0 ${panelWidths[2]}%`,
+              display: maximizedPanel && maximizedPanel !== "doc" ? "none" : "flex",
+            }}
+            className="glass-panel p-4 flex-col overflow-hidden min-w-[280px] transition-[flex] duration-150 relative"
+          >
             <StreamingOutput
               content={outputContent}
               isStreaming={isStreaming}
               currentSection={currentSectionTitle}
+              isMaximized={maximizedPanel === "doc"}
+              onToggleMaximize={() => setMaximizedPanel(maximizedPanel === "doc" ? null : "doc")}
             />
           </div>
         </div>

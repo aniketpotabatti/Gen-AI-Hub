@@ -10,6 +10,8 @@ interface DocArchitectureProps {
   onGenerateSection: (sectionId: string) => void;
   onGenerateAll: () => void;
   onUpdatePlan?: (updatedPlan: DocPlan) => void;
+  isMaximized?: boolean;
+  onToggleMaximize?: () => void;
 }
 
 const STATUS_ICON: Record<string, string> = {
@@ -137,6 +139,8 @@ export default function DocArchitecture({
   onGenerateSection,
   onGenerateAll,
   onUpdatePlan,
+  isMaximized = false,
+  onToggleMaximize,
 }: DocArchitectureProps) {
   const [newTitle, setNewTitle] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -196,15 +200,36 @@ export default function DocArchitecture({
           </span>
         </div>
 
-        {onUpdatePlan && (
-          <button
-            type="button"
-            onClick={() => setShowAddForm((p) => !p)}
-            className="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-violet-500/20 text-white/60 hover:text-violet-300 border border-white/5 transition-all"
-          >
-            {showAddForm ? "Cancel" : "+ Custom Section"}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onUpdatePlan && (
+            <button
+              type="button"
+              onClick={() => setShowAddForm((p) => !p)}
+              className="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.04] hover:bg-violet-500/20 text-white/60 hover:text-violet-300 border border-white/5 transition-all"
+            >
+              {showAddForm ? "Cancel" : "+ Custom"}
+            </button>
+          )}
+
+          {onToggleMaximize && (
+            <button
+              type="button"
+              onClick={onToggleMaximize}
+              title={isMaximized ? "Restore split layout" : "Large View (Maximize)"}
+              className="w-7 h-7 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.08] hover:border-violet-500/40 text-white/60 hover:text-white flex items-center justify-center transition-all"
+            >
+              {isMaximized ? (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 9L4 4m0 0v5m0-5h5m6 6l5 5m0 0v-5m0 5h-5" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Project Meta Card */}
