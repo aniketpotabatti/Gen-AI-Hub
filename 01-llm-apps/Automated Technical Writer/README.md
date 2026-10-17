@@ -169,5 +169,4 @@ To transition AutoWriter AI from MVP to an enterprise-grade, production-ready sy
 
 ## License
 
-```
-- MIT license
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.

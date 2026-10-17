@@ -129,7 +129,7 @@ Please follow the existing code style and add tests for any new functionality.
 
 ## License
 
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.
 
 ---
 

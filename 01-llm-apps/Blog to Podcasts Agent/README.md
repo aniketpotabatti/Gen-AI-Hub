@@ -118,4 +118,4 @@ Play in browser  ·  Download podcast.mp3
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.

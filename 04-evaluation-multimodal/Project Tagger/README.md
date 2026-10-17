@@ -204,4 +204,4 @@ See `docs/architecture.md` for a deeper overview of the data flow and design dec
 
 ## License
 
-MIT — see the [Gen-AI-Hub](https://github.com/aniketpotabatti/gen-ai-hub) repository LICENSE.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.

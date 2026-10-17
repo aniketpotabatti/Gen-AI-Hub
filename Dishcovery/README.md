@@ -74,4 +74,4 @@ I plan to expand this project by adding:
 ---
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is open source and available under the [MIT License](../LICENSE) at the repository root.

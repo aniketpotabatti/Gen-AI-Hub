@@ -87,4 +87,4 @@ Open [http://localhost:8501](http://localhost:8501) in your browser.
 ## 📄 License
 
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.

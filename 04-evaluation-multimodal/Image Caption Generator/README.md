@@ -174,7 +174,7 @@ Add new tests under `tests/` following the same naming convention.
 Please follow the [PEP 8](https://pep8.org/) style guide and include tests for new functionality.
 
 ## License
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.
 
 ## Acknowledgements
 - [BLIP: Bootstrapping Language‑Image Pretraining](https://arxiv.org/abs/2201.12086)

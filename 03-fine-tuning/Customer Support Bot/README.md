@@ -242,7 +242,7 @@ If you encounter any other error, please open an issue with the full traceback.
 
 ## License
 
-This project is licensed under the **MIT License** – see the `LICENSE` file for details.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.
 
 ---
 

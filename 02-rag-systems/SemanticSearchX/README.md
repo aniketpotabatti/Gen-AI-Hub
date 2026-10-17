@@ -131,7 +131,7 @@ Please follow the existing code style (ruff, black) and add tests for new functi
 
 ## License
 
-MIT License – see the `LICENSE` file for details.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.
 
 ## Acknowledgments
 

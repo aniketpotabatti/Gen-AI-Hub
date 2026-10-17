@@ -180,4 +180,4 @@ Issues and pull requests are welcome. New provider adapters should preserve the 
 
 ## License
 
-MIT - see the [Gen-AI-Hub](https://github.com/aniketpotabatti/gen-ai-hub) repository LICENSE.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.

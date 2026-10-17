@@ -118,7 +118,7 @@ To change any of these values, edit `src/utils/config.py` directly.
 
 ## License
 
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](../../LICENSE) at the repository root.
 
 ---
 
