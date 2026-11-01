@@ -11,8 +11,8 @@ import re
 import numpy as np
 import pandas as pd
 try:
-    import google.generativeai as genai
-    from google.generativeai import types
+    from google import genai
+    from google.genai import types
 except ModuleNotFoundError:
     genai = None
     types = None
@@ -133,6 +133,17 @@ def _normalize_code(code) -> str:
     return str(code or "").strip()
 
 
+def _format_chat_history(chat_history: list[dict] | None, limit: int = 6) -> str:
+    """Format recent conversation turns for either analysis route."""
+    if not chat_history:
+        return ""
+    return "\n".join(
+        f"{'User' if message.get('role') == 'user' else 'Assistant'}: "
+        f"{message.get('content', '')}"
+        for message in chat_history[-limit:]
+    )
+
+
 class AIAnalyst:
     """
     Core AI engine that:
@@ -213,14 +224,8 @@ class AIAnalyst:
             "Always cite which source(s) you used with [Source N] notation."
         )
 
-        history_text = ""
-        if chat_history:
-            recent = chat_history[-6:]
-            history_parts = []
-            for msg in recent:
-                role = "User" if msg["role"] == "user" else "Assistant"
-                history_parts.append(f"{role}: {msg['content']}")
-            history_text = "\n\nPREVIOUS CONVERSATION:\n" + "\n".join(history_parts) + "\n"
+        history = _format_chat_history(chat_history)
+        history_text = f"\n\nPREVIOUS CONVERSATION:\n{history}\n" if history else ""
 
         prompt = f"CONTEXT:\n{context}\n{history_text}\nQUESTION: {question}"
 
@@ -260,14 +265,8 @@ class AIAnalyst:
             '"chart_config": {"x": "column", "y": "column", "title": "Chart Title"}}'
         )
 
-        history_text = ""
-        if chat_history:
-            recent = chat_history[-6:]
-            history_parts = []
-            for msg in recent:
-                role = "User" if msg["role"] == "user" else "Assistant"
-                history_parts.append(f"{role}: {msg['content']}")
-            history_text = "PREVIOUS CONVERSATION:\n" + "\n".join(history_parts) + "\n\n"
+        history = _format_chat_history(chat_history)
+        history_text = f"PREVIOUS CONVERSATION:\n{history}\n\n" if history else ""
 
         prompt = f"{history_text}QUESTION: {question}"
 
@@ -406,19 +405,24 @@ class AIAnalyst:
         return "hybrid"
 
     def _describe_dataframe(self, df: pd.DataFrame) -> str:
-        """Create a concise schema description for the AI."""
-        lines = [f"Shape: {df.shape[0]} rows x {df.shape[1]} columns\n"]
-        lines.append("Columns:")
-        for col in df.columns:
-            dtype = str(df[col].dtype)
-            non_null = int(df[col].count())
-            sample = str(df[col].dropna().iloc[0]) if non_null > 0 else "N/A"
-            if len(sample) > 50:
-                sample = sample[:50] + "..."
-            lines.append(f"  - {col} ({dtype}): {non_null} non-null, sample: {sample}")
-
-        lines.append(f"\nFirst 3 rows:\n{df.head(3).to_string()}")
-        return "\n".join(lines)
+        """Describe shape, missingness, types, duplicates, and representative values."""
+        lines = [f"Shape: {df.shape[0]:,} rows x {df.shape[1]} columns"]
+        if df.empty:
+            return "\\n".join(lines + ["The dataframe has no rows."])
+        lines.append("Columns (dtype, non-null, unique, sample):")
+        for col in df.columns[:80]:
+            series = df[col]
+            non_null = int(series.count())
+            sample = str(series.dropna().iloc[0]) if non_null else "N/A"
+            sample = sample[:60] + ("..." if len(sample) > 60 else "")
+            lines.append(f"  - {col!r} ({series.dtype}): {non_null:,} non-null, "
+                         f"{series.nunique(dropna=True):,} unique, sample: {sample}")
+        if len(df.columns) > 80:
+            lines.append(f"  ... {len(df.columns) - 80} more columns omitted")
+        lines.append(f"Missing cells: {int(df.isna().sum().sum()):,}")
+        lines.append(f"Exact duplicate rows: {int(df.duplicated().sum()):,}")
+        lines.append(f"\\nRepresentative rows:\\n{df.head(5).to_string(max_cols=20, max_colwidth=40)}")
+        return "\\n".join(lines)
 
 
 def _response_text(response) -> str:

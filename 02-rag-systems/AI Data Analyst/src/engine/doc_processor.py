@@ -21,90 +21,78 @@ class Document:
 
     def __post_init__(self):
         if not self.doc_id:
-            self.doc_id = hashlib.md5(self.content[:500].encode()).hexdigest()
+            identity = self.metadata.get("source", "") + chr(0) + self.content
+            self.doc_id = hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
 
 # ── Loaders ──────────────────────────────────────────────────────────
 
 
-def load_pdf(file_path: str | Path) -> Document:
-    """Extract all text from a PDF file."""
+def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Trim headers and make blank or repeated names safe to analyze."""
+    seen: dict[str, int] = {}
+    columns = []
+    for index, raw_name in enumerate(df.columns, start=1):
+        name = str(raw_name).strip() or f"column_{index}"
+        count = seen.get(name, 0)
+        seen[name] = count + 1
+        columns.append(name if count == 0 else f"{name}_{count + 1}")
+    df.columns = columns
+    return df
+
+
+def _read_csv(source_factory) -> pd.DataFrame:
+    """Read path or byte input with one common encoding fallback."""
+    last_error: UnicodeDecodeError | None = None
+    for encoding in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
+        try:
+            return _normalize_columns(pd.read_csv(source_factory(), encoding=encoding, low_memory=False))
+        except UnicodeDecodeError as exc:
+            last_error = exc
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
+    if last_error:
+        raise last_error
+    return _normalize_columns(pd.read_csv(source_factory(), low_memory=False))
+
+
+def load_csv(file_path: str | Path) -> pd.DataFrame:
+    """Load a CSV file into a pandas DataFrame."""
     path = Path(file_path)
-    reader = PdfReader(str(path))
-
-    pages = []
-    for i, page in enumerate(reader.pages):
-        text = page.extract_text() or ""
-        if text.strip():
-            pages.append(text)
-
-    full_text = "\n\n".join(pages)
-    return Document(
-        content=full_text,
-        metadata={
-            "source": path.name,
-            "source_type": "pdf",
-            "num_pages": len(reader.pages),
-            "file_path": str(path.absolute()),
-        },
-    )
+    return _read_csv(lambda: path)
 
 
-def load_pdf_from_bytes(file_bytes: bytes, filename: str) -> Document:
-    """Extract text from PDF bytes (for Streamlit file uploads)."""
+def load_csv_from_bytes(file_bytes: bytes, filename: str) -> pd.DataFrame:
+    """Load CSV bytes into a pandas DataFrame."""
     import io
+    return _read_csv(lambda: io.BytesIO(file_bytes))
 
-    reader = PdfReader(io.BytesIO(file_bytes))
 
+def _extract_pdf(reader, filename: str) -> Document:
+    """Extract readable text and metadata from a PDF reader."""
     pages = []
     for page in reader.pages:
         text = page.extract_text() or ""
         if text.strip():
             pages.append(text)
-
-    full_text = "\n\n".join(pages)
     return Document(
-        content=full_text,
-        metadata={
-            "source": filename,
-            "source_type": "pdf",
-            "num_pages": len(reader.pages),
-        },
+        content="\n\n".join(pages),
+        metadata={"source": filename, "source_type": "pdf", "num_pages": len(reader.pages)},
     )
 
 
-def load_csv(file_path: str | Path) -> pd.DataFrame:
-    """Load a CSV file into a pandas DataFrame."""
-    last_error: Exception | None = None
-    for encoding in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
-        try:
-            return pd.read_csv(file_path, encoding=encoding)
-        except UnicodeDecodeError as exc:
-            last_error = exc
-            continue
-        except pd.errors.EmptyDataError:
-            return pd.DataFrame()
-    if last_error:
-        raise last_error
-    return pd.read_csv(file_path)
+def load_pdf(file_path: str | Path) -> Document:
+    """Extract all text from a PDF file."""
+    path = Path(file_path)
+    document = _extract_pdf(PdfReader(str(path)), path.name)
+    document.metadata["file_path"] = str(path.absolute())
+    return document
 
 
-def load_csv_from_bytes(file_bytes: bytes, filename: str) -> pd.DataFrame:
-    """Load CSV from bytes (for Streamlit file uploads)."""
+def load_pdf_from_bytes(file_bytes: bytes, filename: str) -> Document:
+    """Extract text from PDF bytes (for Streamlit file uploads)."""
     import io
-
-    last_error: Exception | None = None
-    for encoding in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
-        try:
-            return pd.read_csv(io.BytesIO(file_bytes), encoding=encoding)
-        except UnicodeDecodeError as exc:
-            last_error = exc
-            continue
-        except pd.errors.EmptyDataError:
-            return pd.DataFrame()
-    if last_error:
-        raise last_error
-    return pd.read_csv(io.BytesIO(file_bytes))
+    return _extract_pdf(PdfReader(io.BytesIO(file_bytes)), filename)
 
 
 # ── Chunker ──────────────────────────────────────────────────────────
@@ -119,6 +107,9 @@ def chunk_text(text: str, chunk_size: int = 500, overlap: int = 50) -> list[str]
     """
     if not text or not text.strip():
         return []
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than zero.")
+    overlap = max(0, min(overlap, chunk_size - 1))
 
     # Split by paragraphs first
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
