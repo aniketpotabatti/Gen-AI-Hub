@@ -16,13 +16,13 @@ import pandas as pd
 from src.utils.config import settings
 from src.engine.ai_analyst import AIAnalyst
 from src.engine.vector_store import VectorStore
+from src.engine.data_profiler import profile_dataframe, suggest_questions
 from src.engine.doc_processor import (
     load_pdf_from_bytes,
     load_csv_from_bytes,
     document_to_chunks,
 )
 from src.viz.chart_generator import generate_chart, auto_chart
-
 
 # ── Page Config ──────────────────────────────────────────────────
 
@@ -63,7 +63,6 @@ def init_session():
         }
         st.session_state.active_dataset_id = legacy_id
 
-
 init_session()
 
 # Check for queued chip actions
@@ -71,7 +70,6 @@ queued_prompt = None
 if st.session_state.pending_prompt:
     queued_prompt = st.session_state.pending_prompt
     st.session_state.pending_prompt = None
-
 
 # ── Custom CSS ────────────────────────────────────────────────────
 
@@ -323,20 +321,11 @@ st.markdown(
         box-shadow: 0 4px 28px rgba(0, 0, 0, 0.4), 0 0 0 3px var(--primary-dim) !important;
     }
 
-    /* Strip stChatInput's own box */
-    div[data-testid="stChatInput"] {
-        flex: 1 !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-    }
-
     div[data-testid="stChatInput"] > div {
         background: transparent !important;
-        border: none !important;
+        border: 1px solid #ffffff !important;
         box-shadow: none !important;
-        border-radius: 0 !important;
+        border-radius: 9999px !important;
         padding: 0 !important;
     }
 
@@ -358,7 +347,7 @@ st.markdown(
     }
 
     /* Send button inside the pill */
-    div[data-testid="stBottom"] form button {
+    div[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"] {
         flex-shrink: 0 !important;
         width: 36px !important;
         height: 36px !important;
@@ -375,12 +364,15 @@ st.markdown(
         box-shadow: 0 2px 8px rgba(45, 212, 191, 0.35) !important;
         transition: all 0.18s ease !important;
         cursor: pointer !important;
+        align-self: center !important;
+        margin: 0 !important;
+        transform: none !important;
     }
 
-    div[data-testid="stBottom"] form button:hover {
+    div[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"]:hover {
         background: #38e8d0 !important;
         box-shadow: 0 4px 14px rgba(45, 212, 191, 0.5) !important;
-        transform: scale(1.05) !important;
+        transform: translateY(-1px) !important;
     }
 
     /* ── Stat cards ── */
@@ -607,17 +599,6 @@ st.markdown(
         background: linear-gradient(to top, #081321 68%, transparent) !important;
     }
 
-    div[data-testid="stBottom"] form {
-        background: #12243A !important;
-        border-color: #2D4561 !important;
-        box-shadow: 0 10px 32px rgba(0, 0, 0, .28) !important;
-    }
-
-    div[data-testid="stBottom"] form:focus-within {
-        border-color: var(--primary) !important;
-        box-shadow: 0 10px 32px rgba(0, 0, 0, .28), 0 0 0 3px var(--primary-dim) !important;
-    }
-
     @media (max-width: 760px) {
         section[data-testid="stMain"] .block-container {
             padding-top: 1.25rem;
@@ -647,14 +628,65 @@ st.markdown(
         padding-bottom: 1.4rem !important;
     }
 
-    div[data-testid="stBottom"] form {
-        outline: .5rem solid rgba(255, 255, 255, .96) !important;
-        outline-offset: 0;
-        border-radius: 9999px !important;
-    }
-
     div[data-testid="stBottom"] form:focus-within {
         outline-color: #FFFFFF !important;
+    }
+
+    /* Style Streamlit's inner chat surface without overriding its stacked layout. */
+    div[data-testid="stChatInput"] {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    div[data-testid="stChatInput"] > div {
+        width: 100% !important;
+        min-height: 58px !important;
+        max-height: 184px !important;
+        box-sizing: border-box !important;
+        align-items: stretch !important;
+        padding: 8px 10px 8px 18px !important;
+        border: 1px solid rgba(255, 255, 255, .92) !important;
+        border-radius: 26px !important;
+        background: #14253B !important;
+        overflow: hidden !important;
+    }
+
+    div[data-testid="stChatInput"] textarea {
+        width: 100% !important;
+        min-height: 26px !important;
+        max-height: 120px !important;
+        overflow-y: auto !important;
+        padding: 4px 0 !important;
+        line-height: 1.45 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Empty and one-line prompts stay compact; Streamlit grows the textarea as lines wrap. */
+    div[data-testid="stChatInput"]:has(textarea:placeholder-shown) > div {
+        min-height: 58px !important;
+    }
+
+    div[data-testid="stChatInput"] textarea:placeholder-shown {
+        min-height: 26px !important;
+        max-height: 26px !important;
+        overflow-y: hidden !important;
+    }
+
+    div[data-testid="stChatInput"] div:has(> button[data-testid="stChatInputSubmitButton"]) {
+        margin-left: auto !important;
+        justify-content: flex-end !important;
+    }
+
+    div[data-testid="stChatInput"] button[data-testid="stChatInputSubmitButton"] {
+        flex: 0 0 36px !important;
+        align-self: center !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        margin: 0 !important;
+        border-radius: 50% !important;
+        transform: none !important;
     }
 
     div[data-testid="stButton"] button,
@@ -668,28 +700,19 @@ st.markdown(
         border-radius: 18px !important;
     }
 
-    @media (max-width: 760px) {
-        div[data-testid="stBottom"] form {
-            outline-width: .35rem !important;
-        }
-    }
 </style>
 """,
     unsafe_allow_html=True,
 )
-
-
 
 # ── Lazy-loaded singletons ───────────────────────────────────────
 @st.cache_resource
 def get_vector_store(api_key):
     return VectorStore(api_key=api_key)
 
-
 @st.cache_resource
 def get_analyst(api_key):
     return AIAnalyst(api_key=api_key, vector_store=get_vector_store(api_key))
-
 
 # ── Left Sidebar (App Controls & Native Functionalities) ─────────
 
@@ -826,6 +849,14 @@ with st.sidebar:
         st.session_state.df = None
         st.session_state.df_name = None
 
+    if st.session_state.df is not None:
+        st.markdown('<div class="sidebar-section-header">SUGGESTED QUESTIONS</div>', unsafe_allow_html=True)
+        st.caption("Questions are based on the selected dataset's columns.")
+        for i, prompt in enumerate(suggest_questions(st.session_state.df)):
+            if st.button(prompt, key=f"dataset_prompt_{i}", use_container_width=True, disabled=not api_key):
+                st.session_state.pending_prompt = prompt
+                st.rerun()
+
     st.markdown('<div class="sidebar-section-header">DATA STATUS</div>', unsafe_allow_html=True)
     status_col1, status_col2 = st.columns(2)
     with status_col1:
@@ -856,7 +887,6 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
-
     # HISTORY Section
     st.markdown('<div class="sidebar-section-header">HISTORY</div>', unsafe_allow_html=True)
     if not st.session_state.chat_history:
@@ -866,7 +896,6 @@ with st.sidebar:
         for q in reversed(user_queries[-3:]):
             display_q = q[:22] + ("..." if len(q) > 22 else "")
             st.caption(f"💬 {display_q}")
-
 
     # Actions
     st.markdown('<div class="sidebar-section-header">ACTIONS</div>', unsafe_allow_html=True)
@@ -895,7 +924,6 @@ with st.sidebar:
             st.session_state.insights = []
             st.cache_resource.clear()
             st.rerun()
-
 
 # ── Main Content Area ────────────────────────────────────────────
 if not st.session_state.chat_history:
@@ -941,6 +969,7 @@ if not st.session_state.chat_history:
 # Collapsible dataset preview if CSV is loaded
 if st.session_state.df is not None:
     df = st.session_state.df
+    report = profile_dataframe(df)
     with st.expander(f"📊 Dataset Loaded: {st.session_state.df_name} ({df.shape[0]:,} rows × {df.shape[1]} cols)", expanded=True):
         c1, c2, c3, c4, c5 = st.columns(5)
         with c1:
@@ -959,6 +988,22 @@ if st.session_state.df is not None:
             st.plotly_chart(overview_chart, use_container_width=True, theme=None, config={"displaylogo": False})
 
         st.dataframe(df.head(50), use_container_width=True, height=280)
+        st.markdown("### Analysis results")
+        st.caption(f"{report['rows']:,} rows · {report['columns']} columns · {report['missing_percent']:.1f}% cells missing")
+        left, right = st.columns(2)
+        with left:
+            st.markdown("**Numeric summary**")
+            if report["numeric_summary"].empty:
+                st.info("No numeric columns detected.")
+            else:
+                st.dataframe(report["numeric_summary"], use_container_width=True, hide_index=True)
+        with right:
+            st.markdown("**Column quality**")
+            st.dataframe(report["column_summary"], use_container_width=True, hide_index=True)
+        st.markdown("### What the data suggests")
+        st.caption("Descriptive patterns do not establish cause and effect.")
+        for finding in report["findings"]:
+            st.markdown(f"- {finding}")
 
 # Conversation Stream
 for i, msg in enumerate(st.session_state.chat_history):

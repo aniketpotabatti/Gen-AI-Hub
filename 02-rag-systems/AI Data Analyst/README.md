@@ -1,139 +1,125 @@
 <p align="center">
-  <img src="src/assets/AI Data Analyst logo.png" alt="AI Data Analyst Logo" width="200"/>
+  <img src="src/assets/AI Data Analyst logo.png" alt="AI Data Analyst Logo" width="220"/>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
-  <img src="https://img.shields.io/badge/Gemini%20AI-4285F4?logo=google&logoColor=white" alt="Gemini AI" />
-  <img src="https://img.shields.io/badge/ChromaDB-0.4+-20232a?logo=chromadb&logoColor=white" alt="ChromaDB" />
+  <img src="https://img.shields.io/badge/Python-3.10--3.12-3776AB?logo=python&logoColor=white" alt="Python 3.10–3.12" />
+  <img src="https://img.shields.io/badge/Streamlit-1.51+-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit" />
+  <img src="https://img.shields.io/badge/Gemini%20AI-Google-4285F4?logo=google&logoColor=white" alt="Gemini AI" />
+  <img src="https://img.shields.io/badge/Charts-Plotly-3F4F75?logo=plotly&logoColor=white" alt="Plotly" />
 </p>
-An AI-powered data analytics tool that lets you upload CSV or PDF files and ask questions in plain English. It returns answers, runs data analysis, and generates charts automatically.
 
----
+An AI-powered analytics workspace for asking questions about CSV datasets and PDF documents in plain English. Upload files, inspect an automatic data profile, and explore answers with generated pandas code, citations, and charts.
 
 ## Features
 
-- **CSV Analysis**: Upload a CSV, ask questions, and get answers backed by auto‑generated pandas code and Plotly charts.  
-- **PDF Q&A**: Upload PDFs, and ask questions about their content using retrieval‑augmented generation (RAG).  
-- **Smart Routing**: When both CSVs and PDFs are loaded, the AI decides which source to query based on your question.  
-- **Auto Visualization**: Charts are generated automatically when the AI determines the result is visual.  
-- **Insight Memory**: Notable Q&A results with charts are saved to an Insights tab for later reference.  
+- **Multiple file uploads:** Upload several CSV and PDF files together.
+- **CSV analysis:** Ask questions about an individual dataset or choose `All datasets` to analyze them together. The combined view aligns columns by name and adds a `_source_file` column.
+- **Automatic data overview:** Each loaded dataset shows row, column, missing-cell, and duplicate-row counts, a data preview, and a chart selected for the available data.
+- **Analysis results and findings:** Review numeric summaries, column quality, potential outliers, and plain-language observations.
+- **Dataset-specific question starters:** Click prompts based on the selected dataset's columns below the dataset selector.
+- **Adaptive charts:** The overview can create time trends, category comparisons, numeric scatter plots, numeric distributions, or category-frequency charts. Analysis charts use a shared dark theme.
+- **PDF question answering:** PDFs are indexed for retrieval-augmented generation (RAG), with source references included in answers.
+- **CSV and PDF routing:** When both kinds of files are loaded, questions are routed to CSV analysis or PDF search based on their content.
+- **Generated analysis code:** CSV answers include the pandas code used to calculate the result.
 
----
+## Requirements
 
-## Project Structure
-
-```
-AI Data Analyst/
-├── .streamlit/
-│   └── config.toml                # Streamlit app configuration (theme, options)
-├── src/
-│   ├── app.py                     # Main entry point: Streamlit dashboard
-│   ├── assets/                    # Static assets (logo, images, icons)
-│   ├── data/                      # App data storage (ChromaDB, processed files)
-│   ├── engine/
-│   │   ├── ai_analyst.py          # Core AI/data analyst logic (Gemini LLM integration)
-│   │   ├── doc_processor.py       # Document loader and text chunking (CSV/PDF)
-│   │   └── vector_store.py        # ChromaDB/vector database abstraction layer
-│   ├── utils/
-│   │   └── config.py              # Application configuration and defaults
-│   └── viz/
-│       └── chart_generator.py     # Converts analysis results into Plotly charts
-
----
+- Python 3.10–3.12
+- A Google Gemini API key for analysis and PDF indexing
 
 ## Setup
 
-**Requirements**: Python 3.10‑3.12, a Google Gemini API key.
+Create and activate a virtual environment from the project directory:
 
-1. **Clone the repository and create a virtual environment**
+```bash
+python -m venv .venv
 
-   ```bash
-   git clone https://github.com/your-username/ai-data-analyst.git
-   cd ai-data-analyst
-   python -m venv .venv
-   # Windows
-   .venv\Scripts\activate
-   # macOS / Linux
-   source .venv/bin/activate
-   ```
+# Windows PowerShell
+.venv/Scripts/Activate.ps1
 
-2. **Install dependencies**
+# macOS or Linux
+source .venv/bin/activate
+```
 
-   ```bash
-   pip install -e .
-   ```
+Install the project:
 
-3. **Run the app**
+```bash
+pip install -e .
+```
 
-   ```bash
-   streamlit run src/app.py
-   ```
+Start the app:
 
-   When the app starts, enter your Google Gemini API key in the sidebar input field. The key is stored only in the session and is never written to disk.
+```bash
+streamlit run src/app.py
+```
 
-4. Open <http://localhost:8501> in your browser.
+Open <http://localhost:8501>, then enter your Gemini API key in the sidebar. The key is held in the Streamlit session and is not written to the project files.
 
----
+## Using the app
+
+1. Enter your Gemini API key in the sidebar.
+2. Upload one or more `.csv` and `.pdf` files.
+3. Review the data preview, analysis results, findings, and generated chart.
+4. If you uploaded multiple CSVs, use **Dataset to analyze** to select one file or **All datasets**.
+5. Use the dataset-specific suggested questions below the selector, or ask in Chat.
+
+The combined CSV view appends rows and aligns columns by name. If files have different schemas, missing values will appear where a file does not contain a column. The `_source_file` column identifies each row's originating file.
+
+CSV data is held in the current app session. PDF text embeddings are stored in the local ChromaDB directory configured in `src/utils/config.py`. **Reset Data** clears the loaded CSVs and chat. When an API key is configured, it also clears the indexed document collection.
 
 ## Configuration
 
-All configurable values are defined in `src/utils/config.py` as sensible defaults. The only required input is the Google Gemini API key, which you provide via the Streamlit sidebar when the app launches.
+Defaults are defined in `src/utils/config.py`:
 
-| Variable               | Default                | Description                                          |
-|------------------------|------------------------|------------------------------------------------------|
-| `GEMINI_MODEL`         | `gemini-2.0-flash`     | LLM model for Q&A and analysis                       |
-| `EMBEDDING_MODEL`      | `models/embedding-001` | Model for document embeddings                        |
-| `CHROMA_PERSIST_DIR`   | `./data/chromadb`      | Where ChromaDB stores vectors                        |
-| `CHUNK_SIZE`           | `500`                  | Text chunk size for document splitting               |
-| `TOP_K`                | `5`                    | Number of chunks retrieved per query                 |
+| Setting | Default | Purpose |
+|---|---|---|
+| `gemini_model` | `gemini-3.5-flash` | Gemini model used for answers and analysis |
+| `embedding_model` | `gemini-embedding-001` | Model used to embed PDF text and queries |
+| `embedding_dimension` | `768` | Embedding vector dimension |
+| `chroma_persist_dir` | `data/chromadb` | Local ChromaDB storage directory |
+| `chroma_collection` | `documents` | ChromaDB collection name |
+| `chunk_size` | `500` | PDF text chunk size |
+| `chunk_overlap` | `50` | Overlap between adjacent PDF chunks |
+| `top_k` | `5` | Maximum number of PDF chunks retrieved per query |
 
-To change any of these values, edit `src/utils/config.py` directly.
+Edit `src/utils/config.py` to change these defaults.
 
----
+## Project structure
 
-## How It Works
+```text
+AI Data Analyst/
+├── .streamlit/
+│   └── config.toml
+├── data/
+│   └── chromadb/                 # Local PDF embeddings
+├── src/
+│   ├── app.py                    # Streamlit interface and upload workflow
+│   ├── assets/                   # App logo and static assets
+│   ├── engine/
+│   │   ├── ai_analyst.py         # Gemini routing and pandas analysis
+│   │   ├── data_profiler.py      # Local dataset profile and question suggestions
+│   │   ├── doc_processor.py      # CSV/PDF loading and PDF chunking
+│   │   └── vector_store.py       # ChromaDB and Gemini embeddings
+│   ├── utils/
+│   │   └── config.py             # Application defaults
+│   └── viz/
+│       └── chart_generator.py    # Automatic and analysis chart generation
+├── tests/
+│   └── test_engine.py
+├── pyproject.toml
+└── README.md
+```
 
-1. **Upload** – Drop a CSV or PDF file into the sidebar.  
-2. **Process** – CSVs are loaded into pandas; PDFs are chunked, embedded with Gemini, and stored in ChromaDB.  
-3. **Ask** – Type a question in the chat input.  
-4. **Analyze** – The AI routes your question to the appropriate handler (data analysis or document retrieval), generates an answer, and suggests a chart if applicable.  
-5. **View** – Results appear in the chat with expandable source citations and the generated code. Charts are displayed automatically when relevant.
+## Development
 
----
+Install development dependencies and run the test suite:
 
-## Tech Stack
-
-| Component      | Technology                                 |
-|----------------|--------------------------------------------|
-| LLM            | Google Gemini (`gemini-2.0-flash`)         |
-| Embeddings     | Gemini `embedding-001`                     |
-| Vector DB      | ChromaDB                                   |
-| Dashboard      | Streamlit                                  |
-| Charts         | Plotly                                     |
-| Data Manipulation | pandas                                 |
-
----
+```bash
+pip install -e ".[dev]"
+pytest
+```
 
 ## License
 
 This project is licensed under the [MIT License](../../LICENSE) at the repository root.
-
----
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request.
-
-1. Fork the repository.  
-2. Create a feature branch (`git checkout -b feature/amazing-feature`).  
-3. Commit your changes (`git commit -m 'Add amazing feature'`).  
-4. Push to the branch (`git push origin feature/amazing-feature`).  
-5. Open a Pull Request.
-
----
-
-## Contact
-
-For questions or feedback, please open an issue on GitHub.
